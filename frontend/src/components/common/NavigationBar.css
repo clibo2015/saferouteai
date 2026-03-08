@@ -1,0 +1,197 @@
+/* NavigationBar Styles */
+
+.navigation-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: var(--spacing-md) var(--spacing-lg);
+  position: relative;
+  z-index: 2;
+}
+
+.nav-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-border);
+  z-index: 1;
+}
+
+.nav-item-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  color: var(--text-secondary);
+  position: relative;
+  min-width: 60px;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  color: var(--accent-primary);
+}
+
+.nav-icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  transition: all var(--transition-normal);
+}
+
+.nav-item.active .nav-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.nav-indicator {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.nav-label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-align: center;
+  transition: all var(--transition-normal);
+}
+
+.nav-item.active .nav-label {
+  font-weight: 600;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* Hover effects */
+.nav-item:hover .nav-icon {
+  transform: translateY(-2px);
+}
+
+.nav-item:active .nav-icon {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 375px) {
+  .nav-container {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .nav-item {
+    min-width: 50px;
+    padding: var(--spacing-xs);
+  }
+
+  .nav-icon-container {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+  }
+}
+
+/* Large screens - full width nav */
+@media (min-width: 768px) {
+  .nav-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .nav-background {
+    background: rgba(0, 0, 0, 0.9);
+    border-top: 2px solid var(--text-primary);
+  }
+
+  .nav-item.active {
+    background: rgba(228, 30, 38, 0.2);
+    border: 1px solid var(--accent-primary);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+  .nav-item,
+  .nav-icon,
+  .nav-indicator {
+    transition: none;
+  }
+
+  .nav-item:hover .nav-icon,
+  .nav-item.active .nav-icon {
+    transform: none;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .nav-background {
+    background: rgba(0, 0, 0, 0.8);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Safe area support for devices with notches */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .nav-container {
+    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
+  }
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) and (max-height: 400px) {
+  .navigation-bar {
+    display: none;
+  }
+}

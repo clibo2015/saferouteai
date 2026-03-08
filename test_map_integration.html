@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRouteAI - Huawei Map Kit Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        #map-container {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🇿🇦 SafeRouteAI - Huawei Map Kit Integration Test</h1>
+            <p>Testing the complete integration between React frontend and Python backend</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📡 Backend API Tests</h2>
+            <button onclick="testBackendAPI()">Test Backend Connection</button>
+            <button onclick="testMapConfig()">Test Map Configuration</button>
+            <button onclick="testMarkers()">Test Crime Markers</button>
+            <button onclick="testHeatmap()">Test Safety Heatmap</button>
+            <div id="backend-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🗺️ Huawei Map Kit Integration</h2>
+            <button onclick="loadHuaweiMap()">Load Huawei Map</button>
+            <button onclick="testMapFeatures()">Test Map Features</button>
+            <div id="map-results"></div>
+            <div id="map-container">
+                <div class="loading">Click "Load Huawei Map" to initialize the map...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Integration Status</h2>
+            <div id="integration-status">
+                <div class="info">Ready to test integration...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mapInstance = null;
+        let mapConfig = null;
+
+        // Test backend API connection
+        async function testBackendAPI() {
+            const resultsDiv = document.getElementById('backend-results');
+            resultsDiv.innerHTML = '<div class="info">Testing backend connection...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8004/');
+                const data = await response.json();
+                
+                if (data.message) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">✅ Backend API Connected Successfully</div>
+                        <div class="info">Version: ${data.version}</div>
+                        <div class="info">Map Kit: ${data.services.map_kit}</div>
+                    `;
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Backend connection failed: ${error.message}</div>`;
+            }
+        }
+
+        // Test map configuration
+        async function testMapConfig() {
+            const resultsDiv = document.getElementById('backend-results');
+            
+            try {
+                const response = await fetch('http://localhost:8004/api/v1/map/config');
+                const data = await response.json();
+                
+                if (data.success && data.map_config) {
+                    mapConfig = data.map_config;
+                    resultsDiv.innerHTML += `
+                        <div class="success">✅ Map Configuration Retrieved</div>
+                        <div class="info">API Key: ${data.map_config.api_key.substring(0, 20)}...</div>
+                        <div class="info">Region: ${data.map_config.region}</div>
+                        <div class="info">Production Mode: ${data.map_config.production_mode}</div>
+                    `;
+                } else {
+                    throw new Error('Invalid map config response');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error">❌ Map config failed: ${error.message}</div>`;
+            }
+        }
+
+        // Test crime markers
+        async function testMarkers() {
+            const resultsDiv = document.getElementById('backend-results');
+            
+            try {
+                const response = await fetch('http://localhost:8004/api/v1/map/markers');
+                const data = await response.json();
+                
+                if (data.success && data.markers) {
+                    resultsDiv.innerHTML += `
+                        <div class="success">✅ Crime Markers Loaded</div>
+                        <div class="info">Total Markers: ${data.total_markers}</div>
+                        <div class="info">Data Source: ${data.data_source}</div>
+                    `;
+                } else {
+                    throw new Error('Invalid markers response');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error">❌ Markers test failed: ${error.message}</div>`;
+            }
+        }
+
+        // Test safety heatmap
+        async function testHeatmap() {
+            const resultsDiv = document.getElementById('backend-results');
+            
+            try {
+                const response = await fetch('http://localhost:8004/api/v1/map/safety-heatmap');
+                const data = await response.json();
+                
+                if (data.success && data.heatmap_data) {
+                    resultsDiv.innerHTML += `
+                        <div class="success">✅ Safety Heatmap Loaded</div>
+                        <div class="info">Total Points: ${data.total_points}</div>
+                        <div class="info">Data Sources: ${data.data_sources.join(', ')}</div>
+                    `;
+                } else {
+                    throw new Error('Invalid heatmap response');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error">❌ Heatmap test failed: ${error.message}</div>`;
+            }
+        }
+
+        // Load Huawei Map
+        async function loadHuaweiMap() {
+            const resultsDiv = document.getElementById('map-results');
+            const mapContainer = document.getElementById('map-container');
+            
+            resultsDiv.innerHTML = '<div class="info">Loading Huawei Map Kit...</div>';
+            
+            try {
+                // First get the map configuration
+                if (!mapConfig) {
+                    await testMapConfig();
+                }
+                
+                if (!mapConfig) {
+                    throw new Error('Map configuration not available');
+                }
+
+                // Load Huawei Map Kit script
+                const scriptUrl = `${mapConfig.js_api_url}?callback=initHuaweiMap&key=${mapConfig.api_key}`;
+                
+                // Create global callback
+                window.initHuaweiMap = function() {
+                    try {
+                        // Initialize the map
+                        const mapOptions = {
+                            center: { lat: -26.2041, lng: 28.0473 }, // Johannesburg
+                            zoom: 10,
+                            language: 'ENG',
+                            sourceType: 'raster'
+                        };
+
+                        if (window.HWMapJsSDK) {
+                            mapInstance = new window.HWMapJsSDK.HWMap(mapContainer, mapOptions);
+                            
+                            resultsDiv.innerHTML = `
+                                <div class="success">✅ Huawei Map Kit Loaded Successfully</div>
+                                <div class="info">Map centered on Johannesburg, South Africa</div>
+                                <div class="info">SDK Version: ${window.HWMapJsSDK.version || 'Unknown'}</div>
+                            `;
+                            
+                            updateIntegrationStatus('Map loaded successfully');
+                        } else {
+                            throw new Error('HWMapJsSDK not available');
+                        }
+                    } catch (error) {
+                        resultsDiv.innerHTML = `<div class="error">❌ Map initialization failed: ${error.message}</div>`;
+                    }
+                };
+
+                // Load the script
+                if (!document.querySelector(`script[src*="mapapi.cloud.huawei.com"]`)) {
+                    const script = document.createElement('script');
+                    script.src = scriptUrl;
+                    script.async = true;
+                    script.onerror = () => {
+                        resultsDiv.innerHTML = `<div class="error">❌ Failed to load Huawei Map Kit script</div>`;
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Script already loaded, call callback
+                    window.initHuaweiMap();
+                }
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Map loading failed: ${error.message}</div>`;
+            }
+        }
+
+        // Test map features
+        async function testMapFeatures() {
+            const resultsDiv = document.getElementById('map-results');
+            
+            if (!mapInstance) {
+                resultsDiv.innerHTML += '<div class="error">❌ Map not loaded yet. Load the map first.</div>';
+                return;
+            }
+
+            try {
+                // Test adding a marker
+                if (window.HWMapJsSDK) {
+                    const marker = new window.HWMapJsSDK.Marker({
+                        position: new window.HWMapJsSDK.LatLng(-26.2041, 28.0473),
+                        map: mapInstance,
+                        title: 'Test Marker - Johannesburg'
+                    });
+
+                    resultsDiv.innerHTML += `
+                        <div class="success">✅ Map Features Working</div>
+                        <div class="info">Test marker added to Johannesburg</div>
+                    `;
+                    
+                    updateIntegrationStatus('All features working correctly');
+                } else {
+                    throw new Error('Map SDK not available');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error">❌ Map features test failed: ${error.message}</div>`;
+            }
+        }
+
+        // Update integration status
+        function updateIntegrationStatus(message) {
+            const statusDiv = document.getElementById('integration-status');
+            const timestamp = new Date().toLocaleTimeString();
+            statusDiv.innerHTML += `<div class="success">[${timestamp}] ${message}</div>`;
+        }
+
+        // Auto-run basic tests on page load
+        window.onload = function() {
+            setTimeout(() => {
+                testBackendAPI();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "template_id": "saferoute-balanced",
+  "name": "SafeRouteAI Balanced Training",
+  "description": "Balanced performance training for better model accuracy (higher cost)",
+  "algorithm_type": "custom",
+  "framework": "PyTorch",
+  "framework_version": "1.8.0",
+  "instance_type": "modelarts.vm.cpu.8u",
+  "instance_count": 1,
+  "max_training_hours": 3,
+  "auto_stop_enabled": true,
+  "data_source_path": "obs://saferoute-ai-data/crime-data/processed/",
+  "output_path": "obs://saferoute-ai-data/models/balanced/",
+  "hyperparameters": {
+    "learning_rate": 0.0005,
+    "batch_size": 16,
+    "epochs": 20,
+    "max_samples": 100000,
+    "early_stopping": true,
+    "patience": 5,
+    "model_complexity": "high",
+    "feature_engineering": true
+  },
+  "estimated_cost_per_hour": 2.0,
+  "estimated_total_cost": 6.0,
+  "optimization_level": "moderate"
+}

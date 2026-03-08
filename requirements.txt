@@ -1,0 +1,56 @@
+# Huawei Cloud SDKs - REAL OFFICIAL SDKs
+# ModelArts SDK (Official from Huawei Support)
+# Install via: pip install src/modelarts-1.0.0-py2.py3-none-any.whl
+# modelarts==1.5.0  # Installed from wheel file
+huaweicloudsdkcore>=3.1.94
+# huaweicloudsdkmodelarts>=3.1.94  # Install from wheel if PyPI fails
+# huaweicloudsdkgaussdb>=3.1.94
+
+# OBS (Object Storage Service) SDK
+esdk-obs-python>=3.23.3
+
+# Web Framework and API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database (Neon PostgreSQL)
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+
+# Authentication and Security
+PyJWT>=2.8.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Data Processing and ML
+numpy>=1.24.0
+pandas>=2.1.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Networking and HTTP
+requests>=2.31.0
+aiohttp>=3.9.0
+httpx>=0.25.0
+
+# Environment and Configuration
+python-dotenv>=1.0.0
+
+# Geospatial and Routing
+geopy>=2.4.0
+folium>=0.15.0
+networkx>=3.2.0
+osmnx>=1.7.0
+
+# Edge AI Simulation (MindSpore Lite alternative)
+opencv-python>=4.8.0
+pillow>=10.0.0
+
+# Database and Storage
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Utilities
+python-multipart>=0.0.6

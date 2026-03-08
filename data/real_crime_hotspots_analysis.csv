@@ -1,0 +1,48 @@
+province,station,quarterly_carjackings,quarterly_robberies,risk_level,is_carjacking_hotspot,is_robbery_hotspot,notable_trend,data_source,year,data_type,latitude,longitude
+Gauteng,Joburg Central,0.0,3283.3333333333335,Extreme,False,True,50%+ of national hijackings.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.2041,28.0473
+Gauteng,Hillbrow,0.0,3283.3333333333335,Extreme,False,True,50%+ of national hijackings.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.1833,28.05
+Gauteng,Tembisa,0.0,3283.3333333333335,Extreme,False,True,50%+ of national hijackings.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.9833,28.2333
+Gauteng,Jabulani,983.3333333333334,0.0,Extreme,True,False,50%+ of national hijackings.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.2678,27.8546
+Gauteng,Akasia,983.3333333333334,0.0,Extreme,True,False,50%+ of national hijackings.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.6167,28.1833
+Gauteng,Ivory Park,983.3333333333334,0.0,Extreme,True,False,50%+ of national hijackings.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.8167,28.15
+Western Cape,Delft,291.6666666666667,0.0,High,True,False,"Hijackings occur mostly in ""morning peak.""",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-33.9833,18.6333
+Western Cape,Philippi East,291.6666666666667,0.0,High,True,False,"Hijackings occur mostly in ""morning peak.""",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-34.0333,18.6167
+Western Cape,Mitchells Plain,0.0,2250.0,High,False,True,"Hijackings occur mostly in ""morning peak.""",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-34.0364,18.6106
+Western Cape,Cape Town Central,0.0,2250.0,High,False,True,"Hijackings occur mostly in ""morning peak.""",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-33.9249,18.4241
+Western Cape,Harare,291.6666666666667,0.0,High,True,False,"Hijackings occur mostly in ""morning peak.""",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-34.0167,18.6
+KwaZulu-Natal,Pinetown,271.6666666666667,0.0,High,True,False,High rates of robbery at residential premises.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.8167,30.8667
+KwaZulu-Natal,Umlazi,271.6666666666667,0.0,High,True,False,High rates of robbery at residential premises.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.9689,30.8821
+KwaZulu-Natal,Inanda,0.0,1416.6666666666667,High,False,True,High rates of robbery at residential premises.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.7,30.8833
+KwaZulu-Natal,Mariannhill,271.6666666666667,0.0,High,True,False,High rates of robbery at residential premises.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.8167,30.8333
+KwaZulu-Natal,Durban Central,0.0,1416.6666666666667,High,False,True,High rates of robbery at residential premises.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.8587,31.0218
+KwaZulu-Natal,Plessislaer,0.0,1416.6666666666667,High,False,True,High rates of robbery at residential premises.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.6167,30.3833
+Eastern Cape,East London,0.0,1000.0,Moderate-High,False,True,High use of firearms in urban robberies.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-32.9833,27.8667
+Eastern Cape,Mthatha,0.0,1000.0,Moderate-High,False,True,High use of firearms in urban robberies.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-31.5889,28.7842
+Eastern Cape,Kwazakele,237.5,0.0,Moderate-High,True,False,High use of firearms in urban robberies.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-33.8333,25.5833
+Eastern Cape,Gqeberha Central,0.0,1000.0,Moderate-High,False,True,High use of firearms in urban robberies.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-33.9608,25.6022
+Eastern Cape,Motherwell,237.5,0.0,Moderate-High,True,False,High use of firearms in urban robberies.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-33.8167,25.4167
+Mpumalanga,Delmas,120.0,0.0,Moderate,True,False,Major surge in truck hijackings on N4/N12.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Mpumalanga,Vosman,0.0,700.0,Moderate,False,True,Major surge in truck hijackings on N4/N12.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Mpumalanga,Nelspruit,0.0,700.0,Moderate,False,True,Major surge in truck hijackings on N4/N12.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.4753,30.97
+Mpumalanga,Witbank,120.0,0.0,Moderate,True,False,Major surge in truck hijackings on N4/N12.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.8667,29.2333
+Mpumalanga,Middelburg,120.0,0.0,Moderate,True,False,Major surge in truck hijackings on N4/N12.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.7833,29.4667
+Mpumalanga,Kwamhlanga,0.0,700.0,Moderate,False,True,Major surge in truck hijackings on N4/N12.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+North West,Brits,92.5,0.0,Moderate,True,False,High robbery rates in mining communities.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+North West,Mmabatho,0.0,516.6666666666666,Moderate,False,True,High robbery rates in mining communities.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+North West,Klerksdorp,0.0,516.6666666666666,Moderate,False,True,High robbery rates in mining communities.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+North West,Rustenburg,92.5,0.0,Moderate,True,False,High robbery rates in mining communities.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-25.6667,27.25
+North West,Potchefstroom,0.0,516.6666666666666,Moderate,False,True,High robbery rates in mining communities.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Free State,Thohoyandou,0.0,416.6666666666667,Low-Moderate,False,True,"Safest province, but cross-border smuggling high.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Free State,Mankweng,65.0,0.0,Low-Moderate,True,False,"Safest province, but cross-border smuggling high.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Free State,Seshego,0.0,416.6666666666667,Low-Moderate,False,True,"Safest province, but cross-border smuggling high.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Free State,Westernburg,0.0,416.6666666666667,Low-Moderate,False,True,"Safest province, but cross-border smuggling high.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Free State,Polokwane,65.0,0.0,Low-Moderate,True,False,"Safest province, but cross-border smuggling high.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-23.9045,29.4689
+Limpopo,Zamdela,0.0,366.6666666666667,Low,False,True,High commercial robbery in CBD areas.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Limpopo,Bloemfontein,0.0,366.6666666666667,Low,False,True,High commercial robbery in CBD areas.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-29.0852,26.1596
+Limpopo,Thabong (Welkom),0.0,366.6666666666667,Low,False,True,High commercial robbery in CBD areas.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Limpopo,Bloemspruit,52.5,0.0,Low,True,False,High commercial robbery in CBD areas.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Limpopo,Parkweg,52.5,0.0,Low,True,False,High commercial robbery in CBD areas.,Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Northern Cape,Galeshewe,8.75,0.0,Lowest,True,False,"Mostly ""common robbery"" rather than carjacking.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Northern Cape,Kimberley,8.75,0.0,Lowest,True,False,"Mostly ""common robbery"" rather than carjacking.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-28.7282,24.7499
+Northern Cape,Upington,0.0,250.0,Lowest,False,True,"Mostly ""common robbery"" rather than carjacking.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0
+Northern Cape,Roodepan,0.0,250.0,Lowest,False,True,"Mostly ""common robbery"" rather than carjacking.",Real_SA_Crime_Hotspots_Analysis,2025,Real_Hotspots_Analysis,-26.0,28.0

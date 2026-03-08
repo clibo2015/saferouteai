@@ -1,0 +1,342 @@
+/* Leaflet Map Component Styles - Matching Reference UI */
+.leaflet-map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0a0a0a;
+  z-index: 1;
+}
+
+.leaflet-map {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  z-index: 2;
+}
+
+/* Custom Marker Styles */
+.custom-marker {
+  background: none;
+  border: none;
+}
+
+.marker-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid white;
+  transition: all 0.3s ease;
+}
+
+.marker-container:hover {
+  transform: scale(1.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.marker-inner {
+  font-size: 16px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading State */
+.map-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(10, 10, 10, 0.9) 0%, rgba(30, 30, 30, 0.9) 100%);
+  color: white;
+  z-index: 1000;
+  border-radius: 16px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #E41E26;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Map Controls and Legend */
+.map-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.map-legend {
+  background: rgba(15, 15, 15, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  max-width: 300px;
+}
+
+.map-legend h4 {
+  color: white;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-right: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.legend-item span {
+  color: #ddd;
+  font-size: 12px;
+}
+
+/* Status Indicator */
+.map-status {
+  background: rgba(15, 15, 15, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  max-width: 250px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-indicator.connected .status-dot {
+  background: #2ed573;
+  box-shadow: 0 0 8px #2ed573;
+}
+
+.status-indicator.disconnected .status-dot {
+  background: #ff4757;
+  box-shadow: 0 0 8px #ff4757;
+}
+
+.status-text {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.data-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.data-stats span {
+  color: #aaa;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.data-stats span::before {
+  content: "•";
+  margin-right: 6px;
+  color: #E41E26;
+}
+
+/* Popup Styles */
+.leaflet-popup-content-wrapper {
+  background: rgba(25, 25, 25, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-popup-tip {
+  background: rgba(25, 25, 25, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.marker-popup h3 {
+  color: white;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.marker-popup p {
+  color: #ccc;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.user-popup h3 {
+  color: #2ed573;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hazard-popup h4 {
+  color: #ff4757;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.severity-indicator {
+  margin-top: 12px;
+}
+
+.severity-indicator span {
+  display: block;
+  color: #ddd;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.severity-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.severity-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Leaflet Controls Styling */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(15, 15, 15, 0.9) !important;
+  backdrop-filter: blur(10px);
+  color: white !important;
+  border: none !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.05);
+}
+
+/* Attribution styling */
+.leaflet-control-attribution {
+  background: rgba(15, 15, 15, 0.7) !important;
+  backdrop-filter: blur(10px);
+  color: #aaa !important;
+  font-size: 11px !important;
+  border-radius: 6px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #E41E26 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .map-controls {
+    flex-direction: column;
+    gap: 12px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+  }
+  
+  .map-legend, .map-status {
+    width: 100%;
+  }
+  
+  .data-stats {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* Animation for route drawing */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* Glow effect for safe routes */
+.safe-route-glow {
+  filter: drop-shadow(0 0 8px #2ed573);
+}
+
+.moderate-route-glow {
+  filter: drop-shadow(0 0 8px #ffa502);
+}
+
+.danger-route-glow {
+  filter: drop-shadow(0 0 8px #ff4757);
+}

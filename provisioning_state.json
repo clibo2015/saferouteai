@@ -1,0 +1,320 @@
+{
+  "resources": [
+    {
+      "resource_id": "saferoute-vpc",
+      "resource_type": "vpc",
+      "resource_name": "saferoute-vpc",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/vpc/?region=af-south-1#/vpcs",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:31:43.112165",
+      "metadata": {
+        "cidr_block": "192.168.0.0/16",
+        "subnet_cidr": "192.168.1.0/24",
+        "security_group": "saferoute-sg"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-modelarts-role",
+      "resource_type": "iam_role",
+      "resource_name": "saferoute-modelarts-role",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/iam/?region=af-south-1#/iam/roles",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:31:43.114171",
+      "metadata": {
+        "service_type": "modelarts",
+        "permissions": [
+          "obs:bucket:GetObject",
+          "obs:object:PutObject"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-budget",
+      "resource_type": "budget_alert",
+      "resource_name": "saferoute-budget",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/billing/?region=af-south-1#/budgets",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:31:43.116166",
+      "metadata": {
+        "budget_limit": 100.0,
+        "alert_thresholds": [
+          50.0,
+          75.0,
+          90.0
+        ],
+        "currency": "USD"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-vpc",
+      "resource_type": "vpc",
+      "resource_name": "saferoute-vpc",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/vpc/?region=af-south-1#/vpcs",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:32:51.678712",
+      "metadata": {
+        "cidr_block": "192.168.0.0/16",
+        "subnet_cidr": "192.168.1.0/24",
+        "security_group": "saferoute-sg"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-modelarts-role",
+      "resource_type": "iam_role",
+      "resource_name": "saferoute-modelarts-role",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/iam/?region=af-south-1#/iam/roles",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:32:51.680713",
+      "metadata": {
+        "service_type": "modelarts",
+        "permissions": [
+          "obs:bucket:GetObject",
+          "obs:object:PutObject"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-budget",
+      "resource_type": "budget_alert",
+      "resource_name": "saferoute-budget",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/billing/?region=af-south-1#/budgets",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:32:51.682711",
+      "metadata": {
+        "budget_limit": 100.0,
+        "alert_thresholds": [
+          50.0,
+          75.0,
+          90.0
+        ],
+        "currency": "USD"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-vpc",
+      "resource_type": "vpc",
+      "resource_name": "saferoute-vpc",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/vpc/?region=af-south-1#/vpcs",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:33:56.632126",
+      "metadata": {
+        "cidr_block": "192.168.0.0/16",
+        "subnet_cidr": "192.168.1.0/24",
+        "security_group": "saferoute-sg"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-modelarts-role",
+      "resource_type": "iam_role",
+      "resource_name": "saferoute-modelarts-role",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/iam/?region=af-south-1#/iam/roles",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:33:56.634127",
+      "metadata": {
+        "service_type": "modelarts",
+        "permissions": [
+          "obs:bucket:GetObject",
+          "obs:object:PutObject"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-budget",
+      "resource_type": "budget_alert",
+      "resource_name": "saferoute-budget",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/billing/?region=af-south-1#/budgets",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:33:56.636127",
+      "metadata": {
+        "budget_limit": 100.0,
+        "alert_thresholds": [
+          50.0,
+          75.0,
+          90.0
+        ],
+        "currency": "USD"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-ai-data",
+      "resource_type": "obs_bucket",
+      "resource_name": "saferoute-ai-data",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/obs/?region=af-south-1#/obs/manager/saferoute-ai-data",
+      "estimated_cost_usd": 5.0,
+      "created_at": "2026-02-07T22:34:38.579392",
+      "metadata": {
+        "storage_class": "STANDARD",
+        "acl": "private",
+        "folders": [
+          "crime-data/",
+          "models/",
+          "training-data/",
+          "inference-models/",
+          "logs/"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-vpc",
+      "resource_type": "vpc",
+      "resource_name": "saferoute-vpc",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/vpc/?region=af-south-1#/vpcs",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:34:38.584394",
+      "metadata": {
+        "cidr_block": "192.168.0.0/16",
+        "subnet_cidr": "192.168.1.0/24",
+        "security_group": "saferoute-sg"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-modelarts-role",
+      "resource_type": "iam_role",
+      "resource_name": "saferoute-modelarts-role",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/iam/?region=af-south-1#/iam/roles",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:34:38.591395",
+      "metadata": {
+        "service_type": "modelarts",
+        "permissions": [
+          "obs:bucket:GetObject",
+          "obs:object:PutObject"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-budget",
+      "resource_type": "budget_alert",
+      "resource_name": "saferoute-budget",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/billing/?region=af-south-1#/budgets",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:34:38.594393",
+      "metadata": {
+        "budget_limit": 100.0,
+        "alert_thresholds": [
+          50.0,
+          75.0,
+          90.0
+        ],
+        "currency": "USD"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-ai-data",
+      "resource_type": "obs_bucket",
+      "resource_name": "saferoute-ai-data",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/obs/?region=af-south-1#/obs/manager/saferoute-ai-data",
+      "estimated_cost_usd": 5.0,
+      "created_at": "2026-02-07T22:37:36.840612",
+      "metadata": {
+        "storage_class": "STANDARD",
+        "acl": "private",
+        "folders": [
+          "crime-data/",
+          "models/",
+          "training-data/",
+          "inference-models/",
+          "logs/"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-vpc",
+      "resource_type": "vpc",
+      "resource_name": "saferoute-vpc",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/vpc/?region=af-south-1#/vpcs",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:37:36.847614",
+      "metadata": {
+        "cidr_block": "192.168.0.0/16",
+        "subnet_cidr": "192.168.1.0/24",
+        "security_group": "saferoute-sg"
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-modelarts-role",
+      "resource_type": "iam_role",
+      "resource_name": "saferoute-modelarts-role",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/iam/?region=af-south-1#/iam/roles",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:37:36.855615",
+      "metadata": {
+        "service_type": "modelarts",
+        "permissions": [
+          "obs:bucket:GetObject",
+          "obs:object:PutObject"
+        ]
+      },
+      "error_message": null
+    },
+    {
+      "resource_id": "saferoute-budget",
+      "resource_type": "budget_alert",
+      "resource_name": "saferoute-budget",
+      "region": "af-south-1",
+      "status": "active",
+      "console_url": "https://console.huaweicloud.com/billing/?region=af-south-1#/budgets",
+      "estimated_cost_usd": 0.0,
+      "created_at": "2026-02-07T22:37:36.858620",
+      "metadata": {
+        "budget_limit": 100.0,
+        "alert_thresholds": [
+          50.0,
+          75.0,
+          90.0
+        ],
+        "currency": "USD"
+      },
+      "error_message": null
+    }
+  ],
+  "total_estimated_cost": 10.0,
+  "last_updated": "2026-02-07T22:37:36.858620"
+}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SafeRoute AI Map Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #map { width: 100%; height: 500px; border: 1px solid #ccc; }
+        #status { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>SafeRoute AI Map Test</h1>
+    
+    <div id="status">Testing API connectivity...</div>
+    
+    <div id="map">
+        <!-- Map will load here -->
+    </div>
+    
+    <script>
+        // Test API connectivity first
+        fetch('http://localhost:8004/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status').innerHTML = 
+                    '<div class="success">✅ API Connected<br>' +
+                    'Status: ' + data.status + '<br>' +
+                    'Map Kit Available: ' + data.map_kit_available + '<br>' +
+                    'Production Mode: ' + data.production_mode + '</div>';
+                
+                // Now test map config
+                return fetch('http://localhost:8004/api/v1/map/config');
+            })
+            .then(response => response.json())
+            .then(configData => {
+                if (configData.success) {
+                    console.log('Map config:', configData);
+                    
+                    // Load Huawei Map Kit
+                    const script = document.createElement('script');
+                    script.src = configData.map_config.js_api_url + '?callback=initMap&key=' + configData.map_config.api_key;
+                    script.onerror = function(e) {
+                        document.getElementById('status').innerHTML += 
+                            '<div class="error">❌ Failed to load Map Kit script<br>' +
+                            'Error: ' + (e.message || 'Unknown error') + '<br>' +
+                            'URL: ' + script.src + '</div>';
+                    };
+                    script.onload = function() {
+                        document.getElementById('status').innerHTML += 
+                            '<div class="success">✅ Map Kit script loaded</div>';
+                    };
+                    document.head.appendChild(script);
+                    
+                    window.initMap = function() {
+                        try {
+                            document.getElementById('status').innerHTML += 
+                                '<div class="success">✅ initMap callback called</div>';
+                            
+                            if (!window.HWMapJsSDK) {
+                                document.getElementById('status').innerHTML += 
+                                    '<div class="error">❌ HWMapJsSDK not available</div>';
+                                return;
+                            }
+                            
+                            const map = new window.HWMapJsSDK.HWMap(document.getElementById('map'), {
+                                center: { lat: -26.2041, lng: 28.0473 },
+                                zoom: 10,
+                                language: 'ENG'
+                            });
+                            
+                            document.getElementById('status').innerHTML += 
+                                '<div class="success">✅ Map loaded successfully!</div>';
+                        } catch (e) {
+                            document.getElementById('status').innerHTML += 
+                                '<div class="error">❌ Map initialization failed: ' + e.message + '<br>' +
+                                'Stack: ' + e.stack + '</div>';
+                        }
+                    };
+                    
+                    // Set timeout for callback
+                    setTimeout(function() {
+                        if (!window.HWMapJsSDK) {
+                            document.getElementById('status').innerHTML += 
+                                '<div class="error">❌ Timeout: HWMapJsSDK not loaded after 10 seconds</div>';
+                        }
+                    }, 10000);
+                } else {
+                    document.getElementById('status').innerHTML += 
+                        '<div class="error">❌ Map config failed</div>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerHTML = 
+                    '<div class="error">❌ API Connection failed: ' + error.message + '</div>';
+            });
+    </script>
+</body>
+</html>

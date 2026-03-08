@@ -1,0 +1,244 @@
+/* LoadingScreen Styles */
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.loading-content {
+  text-align: center;
+  z-index: 2;
+  position: relative;
+}
+
+.loading-logo {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.logo-shield {
+  margin-bottom: var(--spacing-lg);
+  filter: drop-shadow(0 0 20px rgba(228, 30, 38, 0.3));
+}
+
+.loading-title {
+  font-size: var(--font-size-4xl);
+  font-weight: 900;
+  margin: 0;
+  text-shadow: 0 0 30px rgba(228, 30, 38, 0.5);
+}
+
+.loading-animation {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.loading-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.spinner-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 2s linear infinite;
+}
+
+.spinner-ring:nth-child(1) {
+  border-top-color: #E41E26;
+  animation-duration: 2s;
+}
+
+.spinner-ring:nth-child(2) {
+  border-right-color: #ff4757;
+  animation-duration: 3s;
+  animation-direction: reverse;
+}
+
+.spinner-ring:nth-child(3) {
+  border-bottom-color: #00ff88;
+  animation-duration: 4s;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+.loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-2xl);
+  min-height: 120px;
+}
+
+.loading-step {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+.step-indicator {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(228, 30, 38, 0.3);
+}
+
+.step-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.powered-by {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.huawei-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+/* Background Animation */
+.loading-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.bg-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: float 6s ease-in-out infinite;
+}
+
+.bg-particle:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+  animation-duration: 8s;
+}
+
+.bg-particle:nth-child(2) {
+  top: 60%;
+  left: 80%;
+  animation-delay: 2s;
+  animation-duration: 6s;
+}
+
+.bg-particle:nth-child(3) {
+  top: 80%;
+  left: 20%;
+  animation-delay: 4s;
+  animation-duration: 10s;
+}
+
+.bg-particle:nth-child(4) {
+  top: 30%;
+  left: 70%;
+  animation-delay: 1s;
+  animation-duration: 7s;
+}
+
+.bg-particle:nth-child(5) {
+  top: 70%;
+  left: 50%;
+  animation-delay: 3s;
+  animation-duration: 9s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .loading-title {
+    font-size: var(--font-size-3xl);
+  }
+  
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .loading-steps {
+    min-height: 100px;
+  }
+  
+  .step-text {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-ring {
+    animation: none;
+  }
+  
+  .bg-particle {
+    animation: none;
+    opacity: 0.1;
+  }
+  
+  .step-dot {
+    animation: none;
+    background: var(--accent-primary);
+  }
+}

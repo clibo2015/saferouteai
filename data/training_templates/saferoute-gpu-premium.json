@@ -1,0 +1,27 @@
+{
+  "template_id": "saferoute-gpu-premium",
+  "name": "SafeRouteAI GPU Premium Training",
+  "description": "GPU-accelerated training for maximum performance (high cost - use sparingly)",
+  "algorithm_type": "custom",
+  "framework": "PyTorch",
+  "framework_version": "1.8.0",
+  "instance_type": "modelarts.vm.gpu.v100",
+  "instance_count": 1,
+  "max_training_hours": 1,
+  "auto_stop_enabled": true,
+  "data_source_path": "obs://saferoute-ai-data/crime-data/processed/",
+  "output_path": "obs://saferoute-ai-data/models/gpu-premium/",
+  "hyperparameters": {
+    "learning_rate": 0.0001,
+    "batch_size": 8,
+    "epochs": 15,
+    "max_samples": 200000,
+    "early_stopping": true,
+    "patience": 3,
+    "model_complexity": "very_high",
+    "gpu_optimization": true
+  },
+  "estimated_cost_per_hour": 8.0,
+  "estimated_total_cost": 8.0,
+  "optimization_level": "performance"
+}

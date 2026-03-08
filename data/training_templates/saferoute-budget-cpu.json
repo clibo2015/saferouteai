@@ -1,0 +1,26 @@
+{
+  "template_id": "saferoute-budget-cpu",
+  "name": "SafeRouteAI Budget CPU Training",
+  "description": "Budget-conscious CPU training with moderate performance for crime prediction",
+  "algorithm_type": "custom",
+  "framework": "PyTorch",
+  "framework_version": "1.8.0",
+  "instance_type": "modelarts.vm.cpu.4u",
+  "instance_count": 1,
+  "max_training_hours": 2,
+  "auto_stop_enabled": true,
+  "data_source_path": "obs://saferoute-ai-data/crime-data/processed/",
+  "output_path": "obs://saferoute-ai-data/models/budget/",
+  "hyperparameters": {
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "epochs": 10,
+    "max_samples": 50000,
+    "early_stopping": true,
+    "patience": 3,
+    "model_complexity": "medium"
+  },
+  "estimated_cost_per_hour": 1.0,
+  "estimated_total_cost": 2.0,
+  "optimization_level": "aggressive"
+}
