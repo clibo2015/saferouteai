@@ -37,15 +37,9 @@ app = FastAPI(
 # Add CORS middleware (using working configuration)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React development server
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",  # Alternative React port
-        "http://127.0.0.1:3001",
-        "*"  # Allow all origins for testing
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -436,4 +430,6 @@ async def get_system_status():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=settings.api_host, port=settings.api_port)
+    import os
+    port = int(os.environ.get("PORT", settings.api_port))
+    uvicorn.run(app, host="0.0.0.0", port=port)

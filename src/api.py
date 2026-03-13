@@ -152,13 +152,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "capacitor://localhost",
-        "http://localhost",
-        "https://saferouteai-eo68.onrender.com"
-    ],
+    allow_origins=["*"],
     allow_credentials=False, # JWT authentication doesn't need credentials/cookies
     allow_methods=["*"],
     allow_headers=["*"],
@@ -866,4 +860,6 @@ if __name__ == "__main__":
     print(f"🗺️  Map Kit: {'ENABLED' if MAP_KIT_AVAILABLE else 'MOCK MODE'}")
     print("="*70)
     
-    uvicorn.run(app, host="0.0.0.0", port=8004)
+    import os
+    port = int(os.environ.get("PORT", 8004))
+    uvicorn.run(app, host="0.0.0.0", port=port)

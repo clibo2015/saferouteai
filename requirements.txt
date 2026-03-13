@@ -27,7 +27,7 @@ passlib[bcrypt]>=1.7.4
 # Data Processing and ML
 numpy>=1.24.0
 pandas>=2.1.0
-scikit-learn>=1.3.0
+scikit-learn==1.7.2
 joblib>=1.3.0
 
 # Networking and HTTP
@@ -47,6 +47,7 @@ osmnx>=1.7.0
 # Edge AI Simulation (MindSpore Lite alternative)
 opencv-python>=4.8.0
 pillow>=10.0.0
+ultralytics>=8.0.0
 
 # Database and Storage
 sqlalchemy>=2.0.0
