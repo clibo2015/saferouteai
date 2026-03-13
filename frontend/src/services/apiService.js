@@ -3,7 +3,7 @@
  * Handles all communication with the Python backend including user auth
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://saferouteai-eo68.onrender.com';
 
 class ApiService {
   constructor() {
@@ -11,8 +11,8 @@ class ApiService {
     this.token = localStorage.getItem('saferoute_token');
   }
 
-  // Helper method for making HTTP requests
-  async request(endpoint, options = {}) {
+  // Helper method for making HTTP requests with retry mechanism
+  async request(endpoint, options = {}, retries = 2) {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
       headers: {
@@ -53,16 +53,31 @@ class ApiService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error(`API request failed: ${endpoint}`, error);
+      console.error(`API request failed (retries left: ${retries}): ${endpoint}`, error);
+
+      // Check for transient network errors to retry
+      const isNetworkError = error.name === 'TypeError' && error.message === 'Failed to fetch';
+      const isTimeout = error.name === 'AbortError';
+
+      if ((isNetworkError || isTimeout) && retries > 0) {
+        console.log(`Retrying request to ${endpoint}...`);
+        // Wait a bit before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * (3 - retries)));
+        return this.request(endpoint, options, retries - 1);
+      }
 
       // Check if we're offline
       if (!navigator.onLine) {
         throw new Error('You are currently offline. Please check your internet connection.');
       }
 
-      // Handle timeout
+      // Handle final timeout
       if (error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
+        throw new Error('Request timed out. Please try again when your connection is stronger.');
+      }
+
+      if (error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to security server. This may be due to poor signal or network restrictions.');
       }
 
       throw error;
@@ -190,6 +205,14 @@ class ApiService {
 
   async getApiInfo() {
     return this.get('/');
+  }
+
+  // Pre-emptive warm-up call (helpful for Render's free tier)
+  async warmup() {
+    try {
+      // Fire and forget, don't await the 30s timeout if it's purely for waking up
+      fetch(this.baseURL).catch(() => {});
+    } catch (e) {}
   }
 
   // Data Management

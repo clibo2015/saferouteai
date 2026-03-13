@@ -30,6 +30,9 @@ function App() {
   }, []);
 
   const initializeApp = async () => {
+    // Pre-emptively wake up backend if it's on a free tier (like Render)
+    apiService.warmup();
+
     try {
       // Check if user has completed onboarding
       const onboardingStatus = localStorage.getItem('saferoute_onboarded');

@@ -4,6 +4,10 @@
   "description": "SafeRouteAI Frontend - AI-powered secure logistics with Huawei Cloud integration",
   "private": true,
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
     "@react-three/drei": "^9.56.0",
     "@react-three/fiber": "^8.12.0",
     "@testing-library/jest-dom": "^5.16.4",
