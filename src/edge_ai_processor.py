@@ -45,7 +45,6 @@ class EdgeAIProcessor:
             # We can add more specific training for potholes later
         }
         
-        # Risk scores for detected objects
         self.risk_scores = {
             "pedestrian_on_road": 0.8,
             "cyclist_on_road": 0.6,
@@ -53,8 +52,6 @@ class EdgeAIProcessor:
             "truck": 0.4,
             "pothole": 0.9 # Future custom class
         }
-        
-        self._initialize_model()
 
     def _initialize_model(self):
         """Initialize the YOLOv8 model"""
@@ -81,6 +78,9 @@ class EdgeAIProcessor:
         Returns:
             Dict containing detected hazards and risk assessment
         """
+        if not self.is_initialized:
+            self._initialize_model()
+            
         if not self.is_initialized or self.model is None:
             return {"error": "Model not initialized", "hazards": []}
             
