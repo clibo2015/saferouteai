@@ -5,6 +5,9 @@ Production-ready API with real database and authentication
 """
 import sys
 import os
+
+# Set writable config dir for Ultralytics/YOLO before any imports
+os.environ.setdefault("YOLO_CONFIG_DIR", "/tmp/Ultralytics")
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from fastapi import FastAPI, HTTPException, Depends, status
@@ -17,10 +20,10 @@ import logging
 sys.path.append('src')
 
 # Import services
+edge_ai_processor = None  # lazy-loaded in startup_event
+
 try:
     from huawei_map_kit import map_kit_service
-    from edge_ai_processor import EdgeAIProcessor
-    edge_ai_processor = EdgeAIProcessor()
     from huawei_client import huawei_client
     from data_ingestion import data_engine
     from modelarts_integration import modelarts_engine
@@ -193,12 +196,20 @@ class HazardReportRequest(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize database connection on startup"""
+    global edge_ai_processor
     if NEON_AVAILABLE:
         try:
             await neon_db.connect()
             logger.info("✅ Neon database connected successfully")
         except Exception as e:
             logger.error(f"Failed to connect to Neon database: {e}")
+    # Lazy-load EdgeAIProcessor after port is bound to avoid Render startup timeout
+    try:
+        from edge_ai_processor import EdgeAIProcessor
+        edge_ai_processor = EdgeAIProcessor()
+        logger.info("✅ EdgeAIProcessor loaded successfully")
+    except Exception as e:
+        logger.warning(f"EdgeAIProcessor not available: {e}")
 
 # Shutdown event
 @app.on_event("shutdown")
