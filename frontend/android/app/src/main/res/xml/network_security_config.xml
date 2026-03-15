@@ -4,4 +4,7 @@
         <domain includeSubdomains="true">110.238.78.155</domain>
         <domain includeSubdomains="true">localhost</domain>
     </domain-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">saferouteai.duckdns.org</domain>
+    </domain-config>
 </network-security-config>
