@@ -1,0 +1,14 @@
+[Unit]
+Description=Uvicorn instance to serve SafeRouteAI
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/saferouteai
+Environment="PATH=/root/saferouteai/venv/bin"
+EnvironmentFile=/root/saferouteai/.env
+# We use uvicorn directly instead of gunicorn because gunicorn's worker times out silently when loading YOLO
+ExecStart=/root/saferouteai/venv/bin/uvicorn src.api:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips='*' 
+
+[Install]
+WantedBy=multi-user.target
