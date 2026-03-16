@@ -501,7 +501,7 @@ const SafeRouteMapComponent = ({
         }, 2000);
 
         return () => clearInterval(simInterval);
-    }, [isNavigating, isSimulating, routeSteps, stepIdx, simPos]);
+    }, [isNavigating, isSimulating, routeSteps, currentStepIdx, simPos]);
 
     const moveSimulatedUser = () => {
         if (!routeSteps.length) return;
