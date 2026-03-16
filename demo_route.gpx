@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="SafeRouteAI" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>SafeRoute Demo Route - JHB CBD</name>
+    <desc>A route from Joburg Central SAPS to Hillbrow through several crime hotspots.</desc>
+    <trkseg>
+      <!-- JHB Central SAPS -->
+      <trkpt lat="-26.2041" lon="28.0473"><time>2026-03-16T15:40:00Z</time></trkpt>
+      <trkpt lat="-26.2023" lon="28.0550"><time>2026-03-16T15:40:30Z</time></trkpt>
+      <trkpt lat="-26.1980" lon="28.0500"><time>2026-03-16T15:41:00Z</time></trkpt>
+      <trkpt lat="-26.1950" lon="28.0510"><time>2026-03-16T15:41:30Z</time></trkpt>
+      <trkpt lat="-26.1900" lon="28.0490"><time>2026-03-16T15:42:00Z</time></trkpt>
+      <trkpt lat="-26.1879" lon="28.0488"><time>2026-03-16T15:42:30Z</time></trkpt>
+      <trkpt lat="-26.1851" lon="28.0515"><time>2026-03-16T15:43:00Z</time></trkpt>
+      <!-- Hillbrow SAPS -->
+      <trkpt lat="-26.1833" lon="28.0500"><time>2026-03-16T15:43:30Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

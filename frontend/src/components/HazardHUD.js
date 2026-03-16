@@ -23,7 +23,15 @@ const HazardHUD = () => {
   const [navSteps, setNavSteps] = useState([]);
   const [stepIdx, setStepIdx] = useState(0);
   const [navInfo, setNavInfo] = useState(null);
-
+  const [isSimulating, setIsSimulating] = useState(localStorage.getItem('sr_sim_active') === 'true');
+  const [simPos, setSimPos] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('sr_sim_pos') || 'null');
+    } catch (e) {
+      return null;
+    }
+  });
+  const lastUpdateRef = useRef(Date.now());
   useEffect(() => {
     // Check for active navigation session
     const active = localStorage.getItem('sr_nav_active') === 'true';
@@ -37,6 +45,32 @@ const HazardHUD = () => {
         console.error('Failed to load AR nav state', e);
       }
     }
+
+    // Auto-advance logic and simulation
+    const startNavigationLogic = () => {
+      const navInterval = setInterval(async () => {
+        try {
+          let currentPos;
+          
+          if (isSimulating) {
+            // Simulation logic
+            currentPos = moveSimulatedUser();
+          } else {
+            // Real location logic
+            const location = await apiService.getCurrentLocation();
+            currentPos = { lat: location.latitude, lng: location.longitude };
+          }
+
+          if (currentPos && navActive && navSteps.length > 0) {
+            checkStepAdvancement(currentPos);
+          }
+        } catch (e) {
+          console.error('Nav logic error', e);
+        }
+      }, 2000);
+
+      return () => clearInterval(navInterval);
+    };
 
     const initializeCamera = async () => {
       try {
@@ -149,11 +183,102 @@ const HazardHUD = () => {
     };
 
     const detectorCleanup = initializeHazardDetection();
+    const navLogicCleanup = startNavigationLogic();
+
+    // Listen for cross-tab storage changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'sr_sim_active') {
+        setIsSimulating(e.newValue === 'true');
+      } else if (e.key === 'sr_sim_pos' && e.newValue) {
+        try {
+          setSimPos(JSON.parse(e.newValue));
+        } catch (_) {}
+      } else if (e.key === 'sr_nav_step_idx' && e.newValue) {
+        setStepIdx(parseInt(e.newValue, 10));
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       detectorCleanup.then(cleanupFn => cleanupFn && cleanupFn());
+      navLogicCleanup();
+      window.removeEventListener('storage', handleStorageChange);
       cleanup();
     };
-  }, []);
+  }, [isSimulating, navActive, navSteps, stepIdx]);
+
+  const checkStepAdvancement = (pos) => {
+    if (stepIdx >= navSteps.length - 1) return;
+
+    const nextStep = navSteps[stepIdx + 1];
+    if (nextStep && nextStep.maneuver && nextStep.maneuver.location) {
+      const [sLng, sLat] = nextStep.maneuver.location;
+      const dist = haversineKm(pos.lat, pos.lng, sLat, sLng);
+      
+      // If within 50 meters of the next maneuver point, advance
+      if (dist < 0.05) {
+        const newIdx = stepIdx + 1;
+        setStepIdx(newIdx);
+        localStorage.setItem('sr_nav_step_idx', newIdx.toString());
+        console.log(`Step advanced to ${newIdx}: ${nextStep.name || 'Next maneuver'}`);
+      }
+    }
+  };
+
+  const moveSimulatedUser = () => {
+    if (!navSteps.length) return null;
+
+    const now = Date.now();
+    const dt = (now - lastUpdateRef.current) / 1000; // seconds
+    lastUpdateRef.current = now;
+
+    // Simulation speed: ~40 km/h = 11.1 m/s
+    const speed = 0.0111; // km/s
+    const distanceToMove = speed * dt;
+
+    let currentIdx = stepIdx;
+    let currentStep = navSteps[currentIdx];
+    let pos = simPos;
+
+    // If no simPos yet, start at current step location
+    if (!pos) {
+      const [lng, lat] = currentStep.maneuver.location;
+      pos = { lat, lng };
+    }
+
+    // Move towards next step
+    if (currentIdx < navSteps.length - 1) {
+      const nextStep = navSteps[currentIdx + 1];
+      const [nLng, nLat] = nextStep.maneuver.location;
+      
+      const dist = haversineKm(pos.lat, pos.lng, nLat, nLng);
+      
+      if (dist < distanceToMove) {
+        // We reached the next step
+        pos = { lat: nLat, lng: nLng };
+        // Step advancement will be handled by checkStepAdvancement
+      } else {
+        // Interpolate position
+        const ratio = distanceToMove / dist;
+        pos = {
+          lat: pos.lat + (nLat - pos.lat) * ratio,
+          lng: pos.lng + (nLng - pos.lng) * ratio
+        };
+      }
+    }
+
+    setSimPos(pos);
+    localStorage.setItem('sr_sim_pos', JSON.stringify(pos));
+    return pos;
+  };
+
+  const haversineKm = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
 
   const cleanup = () => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -169,6 +294,22 @@ const HazardHUD = () => {
     setTimeout(() => {
       setVoiceReporting(false);
     }, 3000);
+  };
+
+  const toggleSimulation = () => {
+    const newState = !isSimulating;
+    setIsSimulating(newState);
+    localStorage.setItem('sr_sim_active', newState ? 'true' : 'false');
+    lastUpdateRef.current = Date.now();
+    if (newState) {
+      // Starting simulation, start from current step's location
+      if (navSteps[stepIdx]) {
+        const [lng, lat] = navSteps[stepIdx].maneuver.location;
+        const startPos = { lat, lng };
+        setSimPos(startPos);
+        localStorage.setItem('sr_sim_pos', JSON.stringify(startPos));
+      }
+    }
   };
 
 
@@ -280,9 +421,10 @@ const HazardHUD = () => {
             {/* GPS Info */}
             <div className="gps-info">
               <div className="gps-coords">
-                GPS: {hazardData?.gpsCoordinates.latitude.toFixed(4)}°N,
-                {hazardData?.gpsCoordinates.longitude.toFixed(4)}°W
+                GPS: {(simPos?.lat || hazardData?.gpsCoordinates.latitude || 0).toFixed(4)}°N,
+                {(simPos?.lng || hazardData?.gpsCoordinates.longitude || 0).toFixed(4)}°W
               </div>
+              {isSimulating && <div className="sim-badge">SIMULATION ACTIVE</div>}
             </div>
 
             {/* Camera Info */}
@@ -366,6 +508,13 @@ const HazardHUD = () => {
         </button>
         <button className="control-icon" onClick={() => { }}>
           <RadarIcon />
+        </button>
+        <button 
+          className={`control-icon sim-toggle ${isSimulating ? 'active' : ''}`} 
+          onClick={toggleSimulation}
+          title={isSimulating ? "Stop Simulation" : "Start Simulation"}
+        >
+          {isSimulating ? '⏹️' : '🚀'}
         </button>
       </motion.div>
 

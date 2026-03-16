@@ -425,6 +425,17 @@ const SafeRouteMapComponent = ({
     const [isRerouting, setIsRerouting] = useState(false);
     const [rerouteToast, setRerouteToast] = useState('');
 
+    // ── Simulation state ────────────────────────────────────────────────────────
+    const [isSimulating, setIsSimulating] = useState(localStorage.getItem('sr_sim_active') === 'true');
+    const [simPos, setSimPos] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('sr_sim_pos') || 'null');
+        } catch (e) {
+            return null;
+        }
+    });
+    const lastUpdateRef = useRef(Date.now());
+
     // ── Live GPS position (from parent or watchPosition) ───────────────────────
     const [livePos, setLivePos] = useState(null);
 
@@ -439,7 +450,7 @@ const SafeRouteMapComponent = ({
         ? { lat: userLocation.latitude ?? userLocation.lat, lng: userLocation.longitude ?? userLocation.lng }
         : null;
 
-    const userPos = livePos || parentUserPos;
+    const userPos = isSimulating ? simPos : (livePos || parentUserPos);
 
     const defaultCenter = [-26.2041, 28.0473]; // JHB
     const mapCenter = userPos ? [userPos.lat, userPos.lng] : defaultCenter;
@@ -480,6 +491,94 @@ const SafeRouteMapComponent = ({
             localStorage.removeItem('sr_nav_full_coords');
         }
     }, [isNavigating, routeSteps, currentStepIdx, routeInfo, destinationQuery, destination, routeSegments, fullRouteCoords]);
+
+    // ── Simulation logic ────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!isNavigating || !isSimulating) return;
+
+        const simInterval = setInterval(() => {
+            moveSimulatedUser();
+        }, 2000);
+
+        return () => clearInterval(simInterval);
+    }, [isNavigating, isSimulating, routeSteps, stepIdx, simPos]);
+
+    const moveSimulatedUser = () => {
+        if (!routeSteps.length) return;
+
+        const now = Date.now();
+        const dt = (now - lastUpdateRef.current) / 1000;
+        lastUpdateRef.current = now;
+
+        const speed = 0.0111; // 40km/h
+        const distanceToMove = speed * dt;
+
+        let currentIdx = currentStepIdx;
+        let pos = simPos;
+
+        if (!pos && routeSteps[currentIdx]) {
+            const [lng, lat] = routeSteps[currentIdx].maneuver.location;
+            pos = { lat, lng };
+        }
+
+        if (currentIdx < routeSteps.length - 1) {
+            const nextStep = routeSteps[currentIdx + 1];
+            const [nLng, nLat] = nextStep.maneuver.location;
+            const dist = haversineKm(pos.lat, pos.lng, nLat, nLng);
+
+            if (dist < distanceToMove) {
+                pos = { lat: nLat, lng: nLng };
+                // Step advancement handled by existing GPS watch/simulation logic check
+            } else {
+                const ratio = distanceToMove / dist;
+                pos = {
+                    lat: pos.lat + (nLat - pos.lat) * ratio,
+                    lng: pos.lng + (nLng - pos.lng) * ratio
+                };
+            }
+        }
+
+        setSimPos(pos);
+        localStorage.setItem('sr_sim_pos', JSON.stringify(pos));
+
+        // Auto-advance step if close
+        if (currentIdx < routeSteps.length - 1) {
+            const nextStep = routeSteps[currentIdx + 1];
+            const [nLng, nLat] = nextStep.maneuver.location;
+            if (haversineKm(pos.lat, pos.lng, nLat, nLng) < 0.05) {
+                setCurrentStepIdx(v => v + 1);
+                localStorage.setItem('sr_nav_step_idx', (currentIdx + 1).toString());
+            }
+        }
+    };
+
+    const toggleSimulation = () => {
+        const newState = !isSimulating;
+        setIsSimulating(newState);
+        localStorage.setItem('sr_sim_active', newState ? 'true' : 'false');
+        lastUpdateRef.current = Date.now();
+        if (newState && routeSteps[currentStepIdx]) {
+            const [lng, lat] = routeSteps[currentStepIdx].maneuver.location;
+            const startPos = { lat, lng };
+            setSimPos(startPos);
+            localStorage.setItem('sr_sim_pos', JSON.stringify(startPos));
+        }
+    };
+
+    // Listen for storage changes from HUD
+    useEffect(() => {
+        const handleStorage = (e) => {
+            if (e.key === 'sr_sim_active') setIsSimulating(e.newValue === 'true');
+            if (e.key === 'sr_sim_pos' && e.newValue) {
+                try { setSimPos(JSON.parse(e.newValue)); } catch (_) {}
+            }
+            if (e.key === 'sr_nav_step_idx' && e.newValue) {
+                setCurrentStepIdx(parseInt(e.newValue, 10));
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
 
     // ── Restore navigation state on mount ───────────────────────────────────────
     useEffect(() => {
@@ -881,6 +980,9 @@ const SafeRouteMapComponent = ({
                         </div>
                     </div>
                     <div className="sr-nav-hud-actions">
+                        <button className={`sr-sim-toggle-btn ${isSimulating ? 'active' : ''}`} onClick={toggleSimulation} title="Toggle Demo Simulation">
+                            {isSimulating ? '⏹️' : '🚀'}
+                        </button>
                         <button className="sr-ar-toggle-btn" onClick={handleSwitchToAR} title="Switch to AR Camera HUD">
                             📷 <span>AR HUD</span>
                         </button>
