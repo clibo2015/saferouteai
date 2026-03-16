@@ -23,6 +23,8 @@ const HazardHUD = () => {
   const [navSteps, setNavSteps] = useState([]);
   const [stepIdx, setStepIdx] = useState(0);
   const [navInfo, setNavInfo] = useState(null);
+  const [fullRouteCoords, setFullRouteCoords] = useState([]);
+  const [simCoordIdx, setSimCoordIdx] = useState(0);
   const [isSimulating, setIsSimulating] = useState(localStorage.getItem('sr_sim_active') === 'true');
   const [simPos, setSimPos] = useState(() => {
     try {
@@ -41,6 +43,8 @@ const HazardHUD = () => {
         setNavSteps(JSON.parse(localStorage.getItem('sr_nav_steps') || '[]'));
         setStepIdx(parseInt(localStorage.getItem('sr_nav_step_idx') || '0'));
         setNavInfo(JSON.parse(localStorage.getItem('sr_nav_info') || 'null'));
+        setFullRouteCoords(JSON.parse(localStorage.getItem('sr_nav_full_coords') || '[]'));
+        setSimCoordIdx(parseInt(localStorage.getItem('sr_sim_coord_idx') || '0', 10));
       } catch (e) {
         console.error('Failed to load AR nav state', e);
       }
@@ -193,8 +197,12 @@ const HazardHUD = () => {
         try {
           setSimPos(JSON.parse(e.newValue));
         } catch (_) {}
+      } else if (e.key === 'sr_sim_coord_idx' && e.newValue) {
+        setSimCoordIdx(parseInt(e.newValue, 10));
       } else if (e.key === 'sr_nav_step_idx' && e.newValue) {
         setStepIdx(parseInt(e.newValue, 10));
+      } else if (e.key === 'sr_nav_full_coords' && e.newValue) {
+        setFullRouteCoords(JSON.parse(e.newValue));
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -226,7 +234,7 @@ const HazardHUD = () => {
   };
 
   const moveSimulatedUser = () => {
-    if (!navSteps.length) return null;
+    if (!fullRouteCoords.length) return null;
 
     const now = Date.now();
     const dt = (now - lastUpdateRef.current) / 1000; // seconds
@@ -234,41 +242,38 @@ const HazardHUD = () => {
 
     // Simulation speed: ~40 km/h = 11.1 m/s
     const speed = 0.0111; // km/s
-    const distanceToMove = speed * dt;
+    let distanceToMove = speed * dt;
 
-    let currentIdx = stepIdx;
-    let currentStep = navSteps[currentIdx];
+    let curIdx = simCoordIdx;
     let pos = simPos;
 
-    // If no simPos yet, start at current step location
-    if (!pos) {
-      const [lng, lat] = currentStep.maneuver.location;
-      pos = { lat, lng };
+    // If no simPos yet, start at current coord location
+    if (!pos && fullRouteCoords[curIdx]) {
+      pos = { lat: fullRouteCoords[curIdx][0], lng: fullRouteCoords[curIdx][1] };
     }
 
-    // Move towards next step
-    if (currentIdx < navSteps.length - 1) {
-      const nextStep = navSteps[currentIdx + 1];
-      const [nLng, nLat] = nextStep.maneuver.location;
-      
-      const dist = haversineKm(pos.lat, pos.lng, nLat, nLng);
-      
-      if (dist < distanceToMove) {
-        // We reached the next step
-        pos = { lat: nLat, lng: nLng };
-        // Step advancement will be handled by checkStepAdvancement
+    while (distanceToMove > 0 && curIdx < fullRouteCoords.length - 1) {
+      const nextCoord = fullRouteCoords[curIdx + 1];
+      const dist = haversineKm(pos.lat, pos.lng, nextCoord[0], nextCoord[1]);
+
+      if (distanceToMove >= dist) {
+        distanceToMove -= dist;
+        curIdx++;
+        pos = { lat: nextCoord[0], lng: nextCoord[1] };
       } else {
-        // Interpolate position
         const ratio = distanceToMove / dist;
         pos = {
-          lat: pos.lat + (nLat - pos.lat) * ratio,
-          lng: pos.lng + (nLng - pos.lng) * ratio
+          lat: pos.lat + (nextCoord[0] - pos.lat) * ratio,
+          lng: pos.lng + (nextCoord[1] - pos.lng) * ratio
         };
+        distanceToMove = 0;
       }
     }
 
     setSimPos(pos);
+    setSimCoordIdx(curIdx);
     localStorage.setItem('sr_sim_pos', JSON.stringify(pos));
+    localStorage.setItem('sr_sim_coord_idx', curIdx.toString());
     return pos;
   };
 
@@ -302,12 +307,31 @@ const HazardHUD = () => {
     localStorage.setItem('sr_sim_active', newState ? 'true' : 'false');
     lastUpdateRef.current = Date.now();
     if (newState) {
-      // Starting simulation, start from current step's location
-      if (navSteps[stepIdx]) {
-        const [lng, lat] = navSteps[stepIdx].maneuver.location;
-        const startPos = { lat, lng };
+      // Starting simulation, find closest coordinate
+      if (fullRouteCoords.length > 0) {
+        let startPos;
+        let startIdx = 0;
+        
+        if (navSteps[stepIdx]) {
+          const [lng, lat] = navSteps[stepIdx].maneuver.location;
+          startPos = { lat, lng };
+          
+          let minDist = Infinity;
+          fullRouteCoords.forEach((c, i) => {
+            const d = haversineKm(lat, lng, c[0], c[1]);
+            if (d < minDist) {
+              minDist = d;
+              startIdx = i;
+            }
+          });
+        } else {
+          startPos = { lat: fullRouteCoords[0][0], lng: fullRouteCoords[0][1] };
+        }
+
         setSimPos(startPos);
+        setSimCoordIdx(startIdx);
         localStorage.setItem('sr_sim_pos', JSON.stringify(startPos));
+        localStorage.setItem('sr_sim_coord_idx', startIdx.toString());
       }
     }
   };

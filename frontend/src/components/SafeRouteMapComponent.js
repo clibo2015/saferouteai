@@ -434,6 +434,9 @@ const SafeRouteMapComponent = ({
             return null;
         }
     });
+    const [simCoordIdx, setSimCoordIdx] = useState(() => {
+        return parseInt(localStorage.getItem('sr_sim_coord_idx') || '0', 10);
+    });
     const lastUpdateRef = useRef(Date.now());
 
     // ── Live GPS position (from parent or watchPosition) ───────────────────────
@@ -501,45 +504,47 @@ const SafeRouteMapComponent = ({
         }, 2000);
 
         return () => clearInterval(simInterval);
-    }, [isNavigating, isSimulating, routeSteps, currentStepIdx, simPos]);
+    }, [isNavigating, isSimulating, fullRouteCoords, currentStepIdx, simPos, simCoordIdx]);
 
     const moveSimulatedUser = () => {
-        if (!routeSteps.length) return;
+        if (!fullRouteCoords.length) return;
 
         const now = Date.now();
         const dt = (now - lastUpdateRef.current) / 1000;
         lastUpdateRef.current = now;
 
         const speed = 0.0111; // 40km/h
-        const distanceToMove = speed * dt;
+        let distanceToMove = speed * dt;
 
-        let currentIdx = currentStepIdx;
+        let curIdx = simCoordIdx;
         let pos = simPos;
 
-        if (!pos && routeSteps[currentIdx]) {
-            const [lng, lat] = routeSteps[currentIdx].maneuver.location;
-            pos = { lat, lng };
+        if (!pos && fullRouteCoords[curIdx]) {
+            pos = { lat: fullRouteCoords[curIdx][0], lng: fullRouteCoords[curIdx][1] };
         }
 
-        if (currentIdx < routeSteps.length - 1) {
-            const nextStep = routeSteps[currentIdx + 1];
-            const [nLng, nLat] = nextStep.maneuver.location;
-            const dist = haversineKm(pos.lat, pos.lng, nLat, nLng);
+        while (distanceToMove > 0 && curIdx < fullRouteCoords.length - 1) {
+            const nextCoord = fullRouteCoords[curIdx + 1];
+            const dist = haversineKm(pos.lat, pos.lng, nextCoord[0], nextCoord[1]);
 
-            if (dist < distanceToMove) {
-                pos = { lat: nLat, lng: nLng };
-                // Step advancement handled by existing GPS watch/simulation logic check
+            if (distanceToMove >= dist) {
+                distanceToMove -= dist;
+                curIdx++;
+                pos = { lat: nextCoord[0], lng: nextCoord[1] };
             } else {
                 const ratio = distanceToMove / dist;
                 pos = {
-                    lat: pos.lat + (nLat - pos.lat) * ratio,
-                    lng: pos.lng + (nLng - pos.lng) * ratio
+                    lat: pos.lat + (nextCoord[0] - pos.lat) * ratio,
+                    lng: pos.lng + (nextCoord[1] - pos.lng) * ratio
                 };
+                distanceToMove = 0;
             }
         }
 
         setSimPos(pos);
+        setSimCoordIdx(curIdx);
         localStorage.setItem('sr_sim_pos', JSON.stringify(pos));
+        localStorage.setItem('sr_sim_coord_idx', curIdx.toString());
 
         // Auto-advance step if close
         if (currentIdx < routeSteps.length - 1) {
@@ -557,11 +562,35 @@ const SafeRouteMapComponent = ({
         setIsSimulating(newState);
         localStorage.setItem('sr_sim_active', newState ? 'true' : 'false');
         lastUpdateRef.current = Date.now();
-        if (newState && routeSteps[currentStepIdx]) {
-            const [lng, lat] = routeSteps[currentStepIdx].maneuver.location;
-            const startPos = { lat, lng };
-            setSimPos(startPos);
-            localStorage.setItem('sr_sim_pos', JSON.stringify(startPos));
+        
+        if (newState) {
+            // Find coordinate closest to current maneuver or start
+            let startPos;
+            let startIdx = 0;
+
+            if (routeSteps[currentStepIdx]) {
+                const [lng, lat] = routeSteps[currentStepIdx].maneuver.location;
+                startPos = { lat, lng };
+                
+                // Find closest index in fullRouteCoords
+                let minDist = Infinity;
+                fullRouteCoords.forEach((c, i) => {
+                    const d = haversineKm(lat, lng, c[0], c[1]);
+                    if (d < minDist) {
+                        minDist = d;
+                        startIdx = i;
+                    }
+                });
+            } else if (fullRouteCoords.length > 0) {
+                startPos = { lat: fullRouteCoords[0][0], lng: fullRouteCoords[0][1] };
+            }
+
+            if (startPos) {
+                setSimPos(startPos);
+                setSimCoordIdx(startIdx);
+                localStorage.setItem('sr_sim_pos', JSON.stringify(startPos));
+                localStorage.setItem('sr_sim_coord_idx', startIdx.toString());
+            }
         }
     };
 
@@ -571,6 +600,9 @@ const SafeRouteMapComponent = ({
             if (e.key === 'sr_sim_active') setIsSimulating(e.newValue === 'true');
             if (e.key === 'sr_sim_pos' && e.newValue) {
                 try { setSimPos(JSON.parse(e.newValue)); } catch (_) {}
+            }
+            if (e.key === 'sr_sim_coord_idx' && e.newValue) {
+                setSimCoordIdx(parseInt(e.newValue, 10));
             }
             if (e.key === 'sr_nav_step_idx' && e.newValue) {
                 setCurrentStepIdx(parseInt(e.newValue, 10));
