@@ -547,12 +547,12 @@ const SafeRouteMapComponent = ({
         localStorage.setItem('sr_sim_coord_idx', curIdx.toString());
 
         // Auto-advance step if close
-        if (currentIdx < routeSteps.length - 1) {
-            const nextStep = routeSteps[currentIdx + 1];
+        if (currentStepIdx < routeSteps.length - 1) {
+            const nextStep = routeSteps[currentStepIdx + 1];
             const [nLng, nLat] = nextStep.maneuver.location;
             if (haversineKm(pos.lat, pos.lng, nLat, nLng) < 0.05) {
-                setCurrentStepIdx(v => v + 1);
-                localStorage.setItem('sr_nav_step_idx', (currentIdx + 1).toString());
+                setCurrentStepIdx(idx => idx + 1);
+                localStorage.setItem('sr_nav_step_idx', (currentStepIdx + 1).toString());
             }
         }
     };
