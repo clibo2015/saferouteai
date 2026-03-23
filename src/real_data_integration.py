@@ -121,7 +121,7 @@ class RealDataIntegrator:
                 province = row['Province']
                 
                 # Parse carjacking ranges
-                carjacking_range = row['Estimated Quarterly Carjackings'].replace(',', '').replace(' ', '')
+                carjacking_range = str(row['Estimated Quarterly Carjackings']).replace(',', '').replace(' ', '')
                 if '–' in carjacking_range:
                     carjacking_min, carjacking_max = carjacking_range.split('–')
                     carjacking_avg = (int(carjacking_min) + int(carjacking_max)) / 2
@@ -129,7 +129,7 @@ class RealDataIntegrator:
                     carjacking_avg = float(carjacking_range)
                 
                 # Parse robbery ranges
-                robbery_range = row['Estimated Quarterly Aggravated Robberies'].replace(',', '').replace(' ', '')
+                robbery_range = str(row['Estimated Quarterly Aggravated Robberies']).replace(',', '').replace(' ', '')
                 if '–' in robbery_range:
                     robbery_min, robbery_max = robbery_range.split('–')
                     robbery_avg = (int(robbery_min) + int(robbery_max)) / 2
@@ -191,7 +191,9 @@ class RealDataIntegrator:
                         'notable_trend': station_data['notable_trend'],
                         'data_source': 'Real_SA_Crime_Hotspots_Analysis',
                         'year': 2025,  # Current data
-                        'data_type': 'Real_Hotspots_Analysis'
+                        'data_type': 'Real_Hotspots_Analysis',
+                        'crime_category': 'Carjacking' if is_carjacking_hotspot else 'Robbery with aggravating circumstances',
+                        'crime_rate_per_100k': (station_carjackings + station_robberies) * 10 # Estimated rate
                     })
             
             # Convert to DataFrame
@@ -570,10 +572,13 @@ class RealDataIntegrator:
             "Shoplifting": 0.2,
         }
         
-        base_severity = severity_weights.get(row['crime_category'], 0.3)
+        # Get category safely
+        category = row.get('crime_category', 'Other')
+        base_severity = severity_weights.get(category, 0.3)
         
-        # Adjust for crime rate (higher rates = higher severity)
-        rate_factor = min(1.0, row['crime_rate_per_100k'] / 1000)
+        # Adjust for crime rate
+        rate = row.get('crime_rate_per_100k', 50)
+        rate_factor = min(1.0, rate / 1000)
         
         return round(base_severity * (1 + rate_factor), 3)
     

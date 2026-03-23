@@ -828,7 +828,142 @@
 }
 
 .control-btn.map-switch:hover {
-  background: linear-gradient(135deg, rgba(0, 137, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(0, 137, 255, 0.4) 0%, var(--glass-bg) 100%);
   border-color: #3a8fff;
   box-shadow: 0 0 20px rgba(0, 137, 255, 0.3);
 }
+
+/* ── Live Danger Proximity Banner ────────────────────────────────────────── */
+.danger-proximity-banner {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;
+  max-width: 500px;
+  z-index: 100;
+  background: rgba(20, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+  box-shadow: 0 0 30px rgba(255, 56, 56, 0.4);
+}
+
+.dpb-icon {
+  font-size: 32px;
+  animation: dangerFlash 1s ease-in-out infinite;
+}
+
+@keyframes dangerFlash {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.dpb-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dpb-level {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.dpb-name {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dpb-street {
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.dpb-dist {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: white;
+  background: rgba(255, 56, 56, 0.2);
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dpb-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.dpb-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.dpb-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.dpb-btn.dpb-reroute {
+  width: auto;
+  padding: 0 var(--spacing-md);
+  background: #ff7600;
+  border: none;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  box-shadow: 0 4px 12px rgba(255, 118, 0, 0.3);
+}
+
+.dpb-btn.dpb-reroute:hover {
+  background: #ff8c2b;
+  box-shadow: 0 6px 16px rgba(255, 118, 0, 0.5);
+}
+
+.dpb-btn.dpb-dismiss {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dpb-btn.dpb-dismiss:hover {
+  color: white;
+  background: rgba(255, 56, 56, 0.2);
+}
+
+@media (max-width: 480px) {
+  .danger-proximity-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: var(--spacing-sm);
+  }
+  
+  .dpb-actions {
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .dpb-name {
+    white-space: normal;
+  }
+}

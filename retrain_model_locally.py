@@ -15,25 +15,51 @@ import sklearn
 print(f"Using scikit-learn version: {sklearn.__version__}")
 print("=" * 60)
 
-# Generate synthetic training data (same as ModelArts)
-print("Generating training data...")
-data = {
-    'lat': np.random.uniform(-35, -22, 1000),  # SA latitude range
-    'lng': np.random.uniform(16, 33, 1000),    # SA longitude range
-    'hour': np.random.randint(0, 24, 1000),
-    'day_of_week': np.random.randint(0, 7, 1000),
-    'month': np.random.randint(1, 13, 1000),
-    'is_weekend': np.random.choice([0, 1], 1000),
-    'is_night': np.random.choice([0, 1], 1000),
-    'num_risk_factors': np.random.randint(0, 5, 1000),
-    'has_gang_activity': np.random.choice([0, 1], 1000),
-    'has_poor_lighting': np.random.choice([0, 1], 1000),
-    'has_theft_reports': np.random.choice([0, 1], 1000),
-    'risk_level': np.random.uniform(0, 1, 1000)  # Target variable
-}
+# Load training data
+import os
+processed_data_path = 'data/real_crime_hotspots_analysis.csv'
 
-df = pd.DataFrame(data)
-print(f"Generated {len(df)} training samples")
+if os.path.exists(processed_data_path):
+    print(f"Loading real-world 2025/2026 crime data from: {processed_data_path}")
+    real_df = pd.read_csv(processed_data_path)
+    
+    # Map real data to feature format
+    # The CSV has: province, station, quarterly_carjackings, quarterly_robberies, risk_level, is_carjacking_hotspot, is_robbery_hotspot, notable_trend, data_source, year, data_type, latitude, longitude
+    
+    data = {
+        'lat': real_df['latitude'].values,
+        'lng': real_df['longitude'].values,
+        'hour': np.random.randint(0, 24, len(real_df)), # Approximate distribution
+        'day_of_week': np.random.randint(0, 7, len(real_df)),
+        'month': np.random.randint(1, 13, len(real_df)),
+        'is_weekend': np.random.choice([0, 1], len(real_df)),
+        'is_night': np.random.choice([0, 1], len(real_df)),
+        'num_risk_factors': (real_df['is_carjacking_hotspot'].astype(int) + real_df['is_robbery_hotspot'].astype(int)),
+        'has_gang_activity': real_df['is_carjacking_hotspot'].astype(int),
+        'has_poor_lighting': real_df['is_robbery_hotspot'].astype(int),
+        'has_theft_reports': (real_df['is_carjacking_hotspot'] | real_df['is_robbery_hotspot']).astype(int),
+        'risk_level': real_df['quarterly_carjackings'].rank(pct=True).values # Target variable normalized
+    }
+    df = pd.DataFrame(data)
+    print(f"Loaded {len(df)} real-world training samples")
+else:
+    print("Processed crime data not found. Using synthetic data for training...")
+    data = {
+        'lat': np.random.uniform(-35, -22, 1000),  # SA latitude range
+        'lng': np.random.uniform(16, 33, 1000),    # SA longitude range
+        'hour': np.random.randint(0, 24, 1000),
+        'day_of_week': np.random.randint(0, 7, 1000),
+        'month': np.random.randint(1, 13, 1000),
+        'is_weekend': np.random.choice([0, 1], 1000),
+        'is_night': np.random.choice([0, 1], 1000),
+        'num_risk_factors': np.random.randint(0, 5, 1000),
+        'has_gang_activity': np.random.choice([0, 1], 1000),
+        'has_poor_lighting': np.random.choice([0, 1], 1000),
+        'has_theft_reports': np.random.choice([0, 1], 1000),
+        'risk_level': np.random.uniform(0, 1, 1000)  # Target variable
+    }
+    df = pd.DataFrame(data)
+    print(f"Generated {len(df)} synthetic training samples")
 
 # Prepare features and target
 feature_columns = [

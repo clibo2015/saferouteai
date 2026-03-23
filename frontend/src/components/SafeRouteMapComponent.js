@@ -14,6 +14,8 @@ import 'leaflet/dist/leaflet.css';
 import './SafeRouteMapComponent.css';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { SA_CRIME_HOTSPOTS } from '../data/crimeHotspotsData';
+
 
 // Components
 delete L.Icon.Default.prototype._getIconUrl;
@@ -28,7 +30,7 @@ L.Icon.Default.mergeOptions({
 // Level 1: Station/area level  |  Level 2: Street/intersection/building level
 // Source: real_crime_hotspots_analysis.csv + SAPS 2025/26 annual report
 // =============================================================================
-const SA_CRIME_HOTSPOTS = [
+const LEGACY_HOTSPOTS = [
 
     // ─── GAUTENG ─── Extreme/High (SAPS: 50%+ of national hijackings) ──────────
 
@@ -111,9 +113,57 @@ const SA_CRIME_HOTSPOTS = [
     { id: 'wc_han_s1', lat: -34.0441, lng: 18.5756, name: 'Hanover Park — Thornton Rd', province: 'Western Cape', type: 'robbery', risk: 0.86, label: 'Gang robbery zone', street: 'Thornton Rd, Hanover Park' },
     { id: 'wc_kha_s1', lat: -34.0041, lng: 18.6800, name: 'Site B Shopping Centre', province: 'Western Cape', type: 'robbery', risk: 0.86, label: 'Parking lot robbery', street: 'Site B Shopping Centre, Khayelitsha' },
 
-    // Stellenbosch — requested for testing
-    { id: 'wc_stb_s1', lat: -33.9248, lng: 18.8465, name: 'Bird St & Adam Tas Rd', province: 'Western Cape', type: 'robbery', risk: 0.72, label: 'Moderate risk — evening mugging', street: 'Bird St & Adam Tas Rd, Stellenbosch' },
-    { id: 'wc_stb_s2', lat: -33.9180, lng: 18.8350, name: 'Kayamandi Entrance', province: 'Western Cape', type: 'robbery', risk: 0.78, label: 'High robbery — commuter route', street: 'Kayamandi Entrance, Stellenbosch' },
+    // ─── STELLENBOSCH (full precinct) — Low-Moderate, -16.1% Q3 ──────────────
+    { id: 'wc_stb', lat: -33.9358, lng: 18.8601, name: 'Stellenbosch SAPS Station', province: 'Western Cape', type: 'robbery', risk: 0.65, label: 'Precinct -16.1% Q3 — vehicle break-ins & mugging', street: 'Bird St, Stellenbosch' },
+    { id: 'wc_stb_s1', lat: -33.9248, lng: 18.8465, name: 'Bird St & Adam Tas Rd', province: 'Western Cape', type: 'robbery', risk: 0.68, label: 'Evening mugging — after bar hours', street: 'Bird St & Adam Tas Rd, Stellenbosch' },
+    { id: 'wc_stb_s2', lat: -33.9372, lng: 18.8588, name: 'Dorp St — Braak Square', province: 'Western Cape', type: 'mugging', risk: 0.62, label: 'Tourist mugging & bag-snatching', street: 'Dorp St near Braak, Stellenbosch' },
+    { id: 'wc_stb_s3', lat: -33.9395, lng: 18.8514, name: 'Merriman Ave (R44)', province: 'Western Cape', type: 'carjacking', risk: 0.63, label: 'R44 carjacking — approach to town', street: 'Merriman Ave (R44), Stellenbosch' },
+    { id: 'wc_stb_s4', lat: -33.9320, lng: 18.8630, name: 'Plein St & Market St', province: 'Western Cape', type: 'robbery', risk: 0.60, label: 'Late-night street robbery, student area', street: 'Plein St & Market St, Stellenbosch CBD' },
+    { id: 'wc_stb_s5', lat: -33.9280, lng: 18.8700, name: 'Dennesig — Crozier St', province: 'Western Cape', type: 'robbery', risk: 0.64, label: 'Residential break-in zone', street: 'Crozier St, Dennesig, Stellenbosch' },
+    { id: 'wc_stb_s6', lat: -33.9195, lng: 18.8480, name: 'R310 / R44 junction (wine route)', province: 'Western Cape', type: 'carjacking', risk: 0.65, label: 'R310 wine route carjacking spot', street: 'R310 Franschhoek Rd & R44 junction' },
+    { id: 'wc_stb_kay1', lat: -33.9180, lng: 18.8350, name: 'Kayamandi Entrance — Helshoogte Rd', province: 'Western Cape', type: 'robbery', risk: 0.78, label: 'High robbery — commuter route', street: 'Kayamandi Entrance, Helshoogte Rd (R310)' },
+    { id: 'wc_stb_kay2', lat: -33.9155, lng: 18.8410, name: 'Kayamandi Main Rd', province: 'Western Cape', type: 'robbery', risk: 0.76, label: 'Street robbery & vehicle break-ins', street: 'Main Rd, Kayamandi Township' },
+    { id: 'wc_stb_kay3', lat: -33.9220, lng: 18.8395, name: 'Kayamandi Taxi Rank', province: 'Western Cape', type: 'mugging', risk: 0.74, label: 'Taxi rank mugging zone', street: 'Kayamandi Taxi Rank, R44 turnoff' },
+    { id: 'wc_stb_clo1', lat: -33.9454, lng: 18.8556, name: 'Cloetesville — Van Riebeeck St', province: 'Western Cape', type: 'robbery', risk: 0.70, label: 'Gang-related robbery, residential', street: 'Van Riebeeck St, Cloetesville' },
+    { id: 'wc_stb_clo2', lat: -33.9480, lng: 18.8520, name: 'Cloetesville Industrial (R44 south)', province: 'Western Cape', type: 'carjacking', risk: 0.67, label: 'R44 south carjacking at lights', street: 'R44 south, Cloetesville / Jamestown turnoff' },
+    { id: 'wc_stb_r44n1', lat: -33.8980, lng: 18.8291, name: 'R44 North — Devon Valley junction', province: 'Western Cape', type: 'robbery', risk: 0.61, label: 'Farm worker robbery — early morning', street: 'R44 North, Devon Valley Rd junction' },
+
+    // ─── HELDERBERG BASIN ────────────────────────────────────────────────────────
+    { id: 'wc_sw', lat: -34.0713, lng: 18.8491, name: 'Somerset West SAPS Station', province: 'Western Cape', type: 'robbery', risk: 0.66, label: 'Moderate risk — vehicle break-ins', street: 'Main Rd, Somerset West' },
+    { id: 'wc_sw_s1', lat: -34.0669, lng: 18.8455, name: 'Lourens St & Main Rd', province: 'Western Cape', type: 'carjacking', risk: 0.67, label: 'Traffic-light carjacking', street: 'Lourens St & Main Rd, Somerset West' },
+    { id: 'wc_sw_s2', lat: -34.0730, lng: 18.8532, name: 'Somerset Mall Parking', province: 'Western Cape', type: 'robbery', risk: 0.65, label: 'Mall parking robbery — smash & grab', street: 'Somerset Mall, Main Rd, Somerset West' },
+    { id: 'wc_sw_s3', lat: -34.0760, lng: 18.8560, name: 'N2 on-ramp Somerset West', province: 'Western Cape', type: 'carjacking', risk: 0.68, label: 'N2 on-ramp carjacking', street: 'N2 on-ramp, Sir Lowrys Rd, Somerset West' },
+    { id: 'wc_sw_s4', lat: -34.0810, lng: 18.8648, name: 'Vergelegen Ave (evening)', province: 'Western Cape', type: 'robbery', risk: 0.60, label: 'Smash & grab — tourist area', street: 'Vergelegen Ave, Somerset West' },
+    { id: 'wc_sw_nom1', lat: -34.0900, lng: 18.8580, name: 'Nomzamo Township — Strand Rd', province: 'Western Cape', type: 'robbery', risk: 0.76, label: 'High robbery — Nomzamo residential', street: 'Strand Rd, Nomzamo, Somerset West' },
+    { id: 'wc_sw_nom2', lat: -34.0875, lng: 18.8540, name: 'Nomzamo — Haven & Marigold Rd', province: 'Western Cape', type: 'carjacking', risk: 0.73, label: 'Carjacking — Nomzamo intersection', street: 'Haven Rd & Marigold Rd, Nomzamo' },
+    { id: 'wc_str', lat: -34.1159, lng: 18.8328, name: 'Strand SAPS Station', province: 'Western Cape', type: 'robbery', risk: 0.67, label: 'Moderate risk — beach & commercial area', street: 'Beach Rd, Strand' },
+    { id: 'wc_str_s1', lat: -34.1135, lng: 18.8295, name: 'Strand Beach Rd (tourist strip)', province: 'Western Cape', type: 'mugging', risk: 0.64, label: 'Tourist mugging — beach promenade', street: 'Beach Rd, Strand' },
+    { id: 'wc_str_s2', lat: -34.1180, lng: 18.8390, name: 'Strand CBD — Nomzamo side', province: 'Western Cape', type: 'robbery', risk: 0.72, label: 'Armed robbery — CBD fringe', street: 'Baden Powell Dr side, Strand CBD' },
+    { id: 'wc_str_s3', lat: -34.1210, lng: 18.8440, name: 'R44 Strand / Nomzamo border', province: 'Western Cape', type: 'carjacking', risk: 0.70, label: 'R44 carjacking zone', street: 'R44 (Baden Powell Dr), Strand-Nomzamo border' },
+    { id: 'wc_mac_s1', lat: -34.0615, lng: 18.7990, name: 'Macassar — N2 Industrial Zone', province: 'Western Cape', type: 'hijacking', risk: 0.74, label: 'Truck hijacking — N2 industrial', street: 'N2, Macassar Industrial, near Croydon Rd off-ramp' },
+    { id: 'wc_mac_s2', lat: -34.0660, lng: 18.8100, name: 'Firgrove — N2 off-ramp', province: 'Western Cape', type: 'carjacking', risk: 0.68, label: 'N2 off-ramp carjacking — Firgrove', street: 'N2 Firgrove/Macassar off-ramp, Helderberg' },
+    { id: 'wc_gb', lat: -34.1669, lng: 18.8659, name: "Gordon's Bay SAPS Station", province: 'Western Cape', type: 'robbery', risk: 0.57, label: 'Low-Moderate — mostly vehicle break-ins', street: "Beach Rd, Gordon's Bay" },
+    { id: 'wc_gb_s1', lat: -34.1682, lng: 18.8630, name: "Gordon's Bay Harbour & Beach Rd", province: 'Western Cape', type: 'mugging', risk: 0.56, label: 'Smash & grab — harbour tourist area', street: "Harbour Rd, Gordon's Bay" },
+    { id: 'wc_gb_s2', lat: -34.1610, lng: 18.8575, name: "R44 into Gordon's Bay (evening)", province: 'Western Cape', type: 'robbery', risk: 0.58, label: 'Road robbery — low-light R44 stretch', street: "R44, Gordon's Bay approach, Helderberg" },
+    { id: 'wc_slp_s1', lat: -34.1205, lng: 18.9200, name: "Sir Lowry's Pass N2 Summit", province: 'Western Cape', type: 'hijacking', risk: 0.72, label: 'Truck hijacking — N2 summit, steep grade', street: "N2 Sir Lowry's Pass summit" },
+    { id: 'wc_slp_s2', lat: -34.1080, lng: 18.9050, name: "Sir Lowry's Pass Village Rd", province: 'Western Cape', type: 'robbery', risk: 0.65, label: 'Road robbery — isolated stretch', street: "Sir Lowry's Pass Village Rd, off N2" },
+
+    // ─── WESTERN CAPE — Updated 2025/26 Hotspot Precincts ────────────────────
+    { id: 'wc_gug', lat: -33.9813, lng: 18.5747, name: 'Gugulethu SAPS Station', province: 'Western Cape', type: 'murder', risk: 0.94, label: 'SURGE: +23 murders Q3 2025/26 — EXTREME', street: 'NY1, Gugulethu' },
+    { id: 'wc_gug_s1', lat: -33.9791, lng: 18.5782, name: 'NY1 & NY4 intersection', province: 'Western Cape', type: 'robbery', risk: 0.93, label: 'Top gang murder zone 2025/26', street: 'NY1 & NY4, Gugulethu' },
+    { id: 'wc_gug_s2', lat: -33.9840, lng: 18.5700, name: 'Washington St & NY111', province: 'Western Cape', type: 'robbery', risk: 0.91, label: 'Drive-by zone — gang territorial', street: 'Washington St & NY111, Gugulethu' },
+    { id: 'wc_gug_s3', lat: -33.9770, lng: 18.5810, name: 'Gugulethu Square (taxi approach)', province: 'Western Cape', type: 'carjacking', risk: 0.89, label: 'Mall approach carjacking', street: 'Gugulethu Square Mall, Washington St' },
+    { id: 'wc_mfu', lat: -34.0039, lng: 18.6619, name: 'Mfuleni SAPS Station', province: 'Western Cape', type: 'robbery', risk: 0.90, label: 'National Top-10 robbery station 2025/26', street: 'Mfuleni Rd, Mfuleni' },
+    { id: 'wc_mfu_s1', lat: -34.0070, lng: 18.6590, name: 'Mfuleni Main Rd & Baden Powell Dr', province: 'Western Cape', type: 'carjacking', risk: 0.89, label: 'Carjacking — Baden Powell junction', street: 'Mfuleni Main Rd & Baden Powell Dr' },
+    { id: 'wc_mfu_s2', lat: -34.0020, lng: 18.6660, name: 'Mfuleni Shoprite Walk (parking)', province: 'Western Cape', type: 'robbery', risk: 0.87, label: 'Armed parking lot robbery', street: 'Mfuleni Shoprite, Mfuleni Main Rd' },
+    { id: 'wc_kra', lat: -33.8538, lng: 18.7213, name: 'Kraaifontein SAPS Station', province: 'Western Cape', type: 'murder', risk: 0.91, label: 'Q3 2025/26: 60 murders — Extreme', street: 'Main Rd, Kraaifontein' },
+    { id: 'wc_kra_s1', lat: -33.8510, lng: 18.7261, name: 'Kraaifontein — Pella Rd', province: 'Western Cape', type: 'robbery', risk: 0.90, label: 'High robbery — Pella corridor', street: 'Pella Rd, Kraaifontein' },
+    { id: 'wc_kra_s2', lat: -33.8575, lng: 18.7180, name: 'Wallacedene main access', province: 'Western Cape', type: 'robbery', risk: 0.89, label: 'Gang robbery — Wallacedene informal', street: 'Wallacedene main access, Kraaifontein' },
+    { id: 'wc_lin', lat: -34.0228, lng: 18.6856, name: 'Lingelethu West SAPS', province: 'Western Cape', type: 'carjacking', risk: 0.88, label: 'SAPS carjacking hotspot 2025/26', street: 'Lingelethu West, Khayelitsha' },
+    { id: 'wc_lin_s1', lat: -34.0261, lng: 18.6790, name: 'Steve Biko Rd & Spine Rd (E)', province: 'Western Cape', type: 'carjacking', risk: 0.87, label: 'Top carjacking intersection Khayelitsha', street: 'Steve Biko Rd & Spine Rd East, Khayelitsha' },
+    { id: 'wc_nya', lat: -33.9985, lng: 18.5843, name: 'Nyanga SAPS Station', province: 'Western Cape', type: 'murder', risk: 0.91, label: 'Top 5 national murder station — stabilizing', street: 'Ntlakohlaza Rd, Nyanga' },
+    { id: 'wc_nya_s1', lat: -33.9960, lng: 18.5880, name: 'Ntlakohlaza Rd & Weltevreden Rd', province: 'Western Cape', type: 'robbery', risk: 0.90, label: 'Gang robbery & murder zone', street: 'Ntlakohlaza Rd & Weltevreden Rd, Nyanga' },
+    { id: 'wc_kha2_s1', lat: -34.0128, lng: 18.6701, name: 'Khayelitsha — Spine Rd Section A', province: 'Western Cape', type: 'robbery', risk: 0.88, label: 'Spine Rd robbery corridor', street: 'Spine Rd, Khayelitsha Section A' },
 
     // ─── KWAZULU-NATAL ─── High (residential robbery) ──────────────────────────
 
@@ -207,7 +257,55 @@ const SA_CRIME_HOTSPOTS = [
     { id: 'nc_kim_s1', lat: -28.7383, lng: 24.7705, name: 'Kimberley CBD — Du Toitspan Rd', province: 'Northern Cape', type: 'robbery', risk: 0.73, label: 'CBD robbery zone', street: 'Du Toitspan Rd, Kimberley CBD' },
     { id: 'nc_kim_s2', lat: -28.7450, lng: 24.7820, name: 'Diamond Mall Kimberley', province: 'Northern Cape', type: 'robbery', risk: 0.70, label: 'Mall robbery — parking', street: 'Diamond Pavilion Mall, Bultfontein Rd, Kimberley' },
     { id: 'nc_upt_s1', lat: -28.4478, lng: 21.2561, name: 'Upington — Scott St Commercial', province: 'Northern Cape', type: 'robbery', risk: 0.68, label: 'Commercial robbery — road travellers', street: 'Scott St, Upington CBD' },
-    { id: 'nc_rod_s1', lat: -28.7300, lng: 24.7950, name: 'Roodepan — Havenga St', province: 'Northern Cape', type: 'robbery', risk: 0.65, label: 'Common robbery — residential', street: 'Havenga St, Roodepan, Kimberley' },
+
+    // ─── KZN — Additional street-level entries (2025/26) ─────────────────────
+    { id: 'kzn_ple', lat: -29.3641, lng: 30.3918, name: 'Plessislaer SAPS Station', province: 'KZN', type: 'robbery', risk: 0.82, label: 'SAPS High — robbery & carjacking, Msunduzi', street: 'Old Greytown Rd, Plessislaer, Msunduzi' },
+    { id: 'kzn_ple_s1', lat: -29.3670, lng: 30.3880, name: 'Old Greytown Rd Taxi Rank', province: 'KZN', type: 'robbery', risk: 0.81, label: 'Taxi rank robbery — busy commuter', street: 'Old Greytown Rd, Plessislaer' },
+    { id: 'kzn_ple_s2', lat: -29.3600, lng: 30.3950, name: 'Msunduzi River Rd (fringe)', province: 'KZN', type: 'carjacking', risk: 0.78, label: 'River valley carjacking', street: 'Msunduzi River Rd, Plessislaer' },
+    { id: 'kzn_mar_s1', lat: -29.8220, lng: 30.8330, name: 'Mariannhill N3 off-ramp', province: 'KZN', type: 'hijacking', risk: 0.83, label: 'N3 truck hijacking — Mariannhill', street: 'N3 near Mariannhill off-ramp, Durban' },
+    { id: 'kzn_mar_s2', lat: -29.8260, lng: 30.8270, name: 'Mariannhill Mall Parking', province: 'KZN', type: 'robbery', risk: 0.80, label: 'Parking lot robbery — mall', street: 'Mariannhill Mall, M13, Pinetown' },
+    { id: 'kzn_inan_s2', lat: -29.7270, lng: 30.9730, name: 'Inanda Dam Rd — Ohlange area', province: 'KZN', type: 'robbery', risk: 0.87, label: 'Road robbery — isolated dam road', street: 'Inanda Dam Rd, Ohlange/Ntuzuma' },
+    { id: 'kzn_kwa_s1', lat: -29.7500, lng: 30.9410, name: 'KwaMashu Hwy on-ramp', province: 'KZN', type: 'carjacking', risk: 0.84, label: 'N2 on-ramp carjacking — KwaMashu', street: 'N2 on-ramp, KwaMashu, Durban North' },
+    { id: 'kzn_kwa_s2', lat: -29.7640, lng: 30.9480, name: 'KwaMashu Shopping Centre', province: 'KZN', type: 'robbery', risk: 0.82, label: 'Armed robbery — KwaMashu shop', street: 'KwaMashu Shopping Ctr, KwaMashu Drive' },
+    { id: 'kzn_chat_s1', lat: -29.8670, lng: 30.9040, name: 'Chatsworth — Edwin Swales Dr', province: 'KZN', type: 'carjacking', risk: 0.78, label: 'Carjacking at traffic lights', street: 'Edwin Swales Dr, Chatsworth' },
+    { id: 'kzn_chat_s2', lat: -29.8720, lng: 30.8980, name: 'Chatsworth Centre Parking', province: 'KZN', type: 'robbery', risk: 0.76, label: 'Mall parking robbery', street: 'Chatsworth Centre, Higginson Hwy' },
+    { id: 'kzn_pmb_s1', lat: -29.6196, lng: 30.3887, name: 'Pietermaritzburg — Church St', province: 'KZN', type: 'robbery', risk: 0.77, label: 'CBD street robbery — Pietermaritzburg', street: 'Church St, Pietermaritzburg CBD' },
+    { id: 'kzn_pmb_s2', lat: -29.6241, lng: 30.3920, name: 'Northdale Taxi Rank (PMB)', province: 'KZN', type: 'mugging', risk: 0.75, label: 'Commuter robbery — Northdale', street: 'Northdale Taxi Rank, Pietermaritzburg' },
+
+    // ─── EASTERN CAPE — Additional street entries ─────────────────────────────
+    { id: 'ec_dun_s1', lat: -32.9850, lng: 27.8620, name: 'Duncan Village — Buffalo City Rd', province: 'Eastern Cape', type: 'robbery', risk: 0.83, label: 'High robbery — Buffalo City corridor', street: 'Buffalo City Rd, Duncan Village, East London' },
+    { id: 'ec_dun_s2', lat: -32.9910, lng: 27.8680, name: 'Duncan Village Taxi Rank', province: 'Eastern Cape', type: 'mugging', risk: 0.80, label: 'Taxi rank mugging', street: 'Nqubela St Taxi Rank, Duncan Village' },
+    { id: 'ec_nbr_s1', lat: -33.7738, lng: 25.4120, name: 'New Brighton — Qumza Hwy', province: 'Eastern Cape', type: 'robbery', risk: 0.80, label: 'Road robbery — Qumza Highway', street: 'Qumza Hwy, New Brighton, Gqeberha' },
+    { id: 'ec_nbr_s2', lat: -33.7690, lng: 25.4178, name: 'New Brighton — William Moffett', province: 'Eastern Cape', type: 'carjacking', risk: 0.78, label: 'Carjacking — William Moffett Exwy', street: 'William Moffett Exwy, New Brighton' },
+    { id: 'ec_che_s1', lat: -32.7780, lng: 28.1360, name: 'Chintsa / R72 Coastal Road', province: 'Eastern Cape', type: 'robbery', risk: 0.64, label: 'Isolated coastal road robbery', street: 'R72 Coastal Rd, Chintsa side, EC' },
+
+    // ─── MPUMALANGA — Additional streets ─────────────────────────────────────
+    { id: 'mp_kwa_s2', lat: -25.4215, lng: 31.1420, name: 'Kwamhlanga — R573 corridor', province: 'Mpumalanga', type: 'robbery', risk: 0.76, label: 'Road robbery — R573', street: 'R573, Kwamhlanga township, Mpumalanga' },
+    { id: 'mp_sec_s1', lat: -26.5140, lng: 29.1710, name: 'Secunda — N17 Evander junction', province: 'Mpumalanga', type: 'hijacking', risk: 0.79, label: 'N17 CIT and truck hijacking zone', street: 'N17, Evander junction, Secunda corridor' },
+    { id: 'mp_n4_s1', lat: -25.5030, lng: 30.0840, name: 'N4 Karino / Hectorspruit stretch', province: 'Mpumalanga', type: 'hijacking', risk: 0.82, label: 'N4 freight hijacking — border corridor', street: 'N4 National Rd, Karino to Hectorspruit' },
+    { id: 'mp_n4_s2', lat: -25.4480, lng: 31.2250, name: 'N4 Komatipoort border approach', province: 'Mpumalanga', type: 'hijacking', risk: 0.80, label: 'Smuggling / hijacking — border zone', street: 'N4 near Komatipoort border post, MP' },
+
+    // ─── NORTH WEST — Additional street entries ───────────────────────────────
+    { id: 'nw_sun_s1', lat: -25.8118, lng: 25.8556, name: 'Sun City Approach — R565', province: 'North West', type: 'robbery', risk: 0.67, label: 'Tourist area robbery — isolated R565', street: 'R565, Sun City approach road, NW' },
+    { id: 'nw_bot_s1', lat: -25.7610, lng: 25.8981, name: 'Bojanala Platinum area — R510', province: 'North West', type: 'hijacking', risk: 0.75, label: 'Mine cargo hijacking — R510', street: 'R510, Bojanala Platinum Belt, NW' },
+    { id: 'nw_maf_s1', lat: -25.8565, lng: 25.6401, name: 'Mahikeng (Mafikeng) — Carnavon Rd', province: 'North West', type: 'robbery', risk: 0.73, label: 'Residential robbery zone', street: 'Carnavon Rd, Mahikeng CBD' },
+    { id: 'nw_ndb_s1', lat: -26.8760, lng: 26.7010, name: 'Jouberton — OR Tambo Dr (Klerksdorp)', province: 'North West', type: 'robbery', risk: 0.77, label: 'Township robbery — OR Tambo Drive', street: 'OR Tambo Dr, Jouberton, Klerksdorp' },
+
+    // ─── LIMPOPO — Additional street entries ──────────────────────────────────
+    { id: 'lp_n1_s1', lat: -24.8010, lng: 30.0550, name: 'N1 Mokopane Fuel Stops', province: 'Limpopo', type: 'robbery', risk: 0.66, label: 'Fuel stop robbery — N1 corridor', street: 'N1, Mokopane fuel station off-ramps' },
+    { id: 'lp_tza_s1', lat: -23.8274, lng: 30.1578, name: 'Tzaneen — Agatha Rd (R71)', province: 'Limpopo', type: 'robbery', risk: 0.65, label: 'Isolated road robbery', street: 'R71 Agatha Rd, Tzaneen' },
+    { id: 'lp_bel_s1', lat: -24.8730, lng: 28.2960, name: 'Bela-Bela (Warmbaths) N1 off-ramp', province: 'Limpopo', type: 'carjacking', risk: 0.64, label: 'N1 tourist corridor carjacking', street: 'N1 off-ramp, Bela-Bela (Warmbaths)' },
+    { id: 'lp_giy_s1', lat: -23.2980, lng: 30.9820, name: 'Giyani — R81 town approach', province: 'Limpopo', type: 'robbery', risk: 0.68, label: 'Rural road robbery — Giyani approach', street: 'R81, Giyani town approach, Limpopo' },
+
+    // ─── FREE STATE — Additional street entries ───────────────────────────────
+    { id: 'fs_kro_s1', lat: -27.6600, lng: 27.2330, name: 'Kroonstad — Maokeng area (N1)', province: 'Free State', type: 'robbery', risk: 0.73, label: 'N1 road robbery — Maokeng', street: 'N1 near Maokeng off-ramp, Kroonstad' },
+    { id: 'fs_bot_s1', lat: -26.3410, lng: 27.3710, name: 'Botshabelo — Thaba Nchu Rd (R64)', province: 'Free State', type: 'carjacking', risk: 0.76, label: 'Carjacking — isolated R64', street: 'R64 Thaba Nchu Rd, Botshabelo' },
+    { id: 'fs_vir_s1', lat: -28.0680, lng: 26.8530, name: 'Virginia — Mine Rd approach', province: 'Free State', type: 'robbery', risk: 0.72, label: 'Mine employee robbery — Virginia', street: 'Mine Rd, Virginia, Free State' },
+
+    // ─── NORTHERN CAPE — Additional street entries ────────────────────────────
+    { id: 'nc_kat_s1', lat: -27.6910, lng: 23.0430, name: 'Kathu — Sishen Mine Access', province: 'Northern Cape', type: 'robbery', risk: 0.60, label: 'Mine employee robbery', street: 'Sout Rd, Kathu near Sishen Mine access' },
+    { id: 'nc_de_s1', lat: -30.6600, lng: 23.9820, name: 'De Aar — N1/N10 Junction', province: 'Northern Cape', type: 'hijacking', risk: 0.62, label: 'N1/N10 freight hijacking junction', street: 'N1/N10 junction, De Aar, Northern Cape' },
+    { id: 'nc_spr_s1', lat: -29.6650, lng: 17.8870, name: 'Springbok — N7 Approach', province: 'Northern Cape', type: 'robbery', risk: 0.55, label: 'N7 traveller robbery — remote stretch', street: 'N7, Springbok approach, Northern Cape' },
 ];
 
 // =============================================================================
@@ -505,6 +603,24 @@ const SafeRouteMapComponent = ({
 
         return () => clearInterval(simInterval);
     }, [isNavigating, isSimulating, fullRouteCoords, currentStepIdx, simPos, simCoordIdx]);
+
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'sr_reroute_request') {
+                try {
+                    const req = JSON.parse(e.newValue);
+                    if (req && req.timestamp > Date.now() - 5000) {
+                        handleReroute(userPos, { autoReason: req.hazardName });
+                        localStorage.removeItem('sr_reroute_request');
+                    }
+                } catch (err) {
+                    console.error('SafeRouteMap: Reroute parse error', err);
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [userPos]);
 
     const moveSimulatedUser = () => {
         if (!fullRouteCoords.length) return;

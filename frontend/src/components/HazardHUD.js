@@ -1,14 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-
-// Components
 
 // Services
 import { apiService } from '../services/apiService';
+import {
+  getNearbyHotspots,
+  buildVoiceMessage,
+  speak,
+  shouldSuggestReroute,
+  getRiskColor,
+  getRiskLevel,
+} from '../services/crimeHotspots';
 
 // Styles
 import './HazardHUD.css';
+
+// ── Inline crime hotspot data (mirrors SafeRouteMapComponent) ─────────────────
+// We import by reference so both components stay in sync.
+import { SA_CRIME_HOTSPOTS } from '../data/crimeHotspotsData';
 
 const HazardHUD = () => {
   const navigate = useNavigate();
@@ -17,6 +27,13 @@ const HazardHUD = () => {
   const [hazardData, setHazardData] = useState(null);
   const [isDetecting] = useState(true);
   const [voiceReporting, setVoiceReporting] = useState(false);
+
+  // ── Proximity Alert State ──────────────────────────────────────────────────
+  const [dangerAlert, setDangerAlert] = useState(null);   // { hotspot, dismissed }
+  const [showReroute, setShowReroute] = useState(false);
+  const [voiceMuted, setVoiceMuted] = useState(false);
+  const alertedHotspotsRef = useRef(new Set()); // track already-alerted IDs
+  const proximityIntervalRef = useRef(null);
 
   // AR Navigation State
   const [navActive, setNavActive] = useState(false);
@@ -215,6 +232,97 @@ const HazardHUD = () => {
     };
   }, [isSimulating, navActive, navSteps, stepIdx]);
 
+  // ── Proximity Scan Loop — runs every 3 seconds while navigating ───────────
+  const runProximityScan = useCallback(async () => {
+    if (!navActive && !isSimulating) return;
+
+    let pos = null;
+    if (isSimulating && simPos) {
+      pos = simPos;
+    } else {
+      try {
+        const loc = await apiService.getCurrentLocation();
+        pos = { lat: loc.latitude, lng: loc.longitude };
+      } catch (_) { return; }
+    }
+
+    if (!pos || !SA_CRIME_HOTSPOTS?.length) return;
+
+    const nearby = getNearbyHotspots(pos.lat, pos.lng, SA_CRIME_HOTSPOTS);
+    if (!nearby.length) return;
+
+    const closest = nearby[0];
+
+    // Only alert once per hotspot entry (reset when user moves away)
+    if (alertedHotspotsRef.current.has(closest.id)) return;
+    alertedHotspotsRef.current.add(closest.id);
+
+    // Show visual danger banner
+    setDangerAlert(closest);
+    setShowReroute(shouldSuggestReroute(closest));
+
+    // Voice warning (unless muted)
+    if (!voiceMuted) {
+      speak(buildVoiceMessage(closest));
+    }
+
+    // Auto-dismiss banner after 12 seconds if user doesn't act
+    setTimeout(() => {
+      setDangerAlert(prev => prev?.id === closest.id ? null : prev);
+    }, 12000);
+  }, [navActive, isSimulating, simPos, voiceMuted]);
+
+  // Clear alerted hotspot cache when user moves >500m from it
+  const cleanupAlertCache = useCallback(async () => {
+    if (!alertedHotspotsRef.current.size) return;
+    let pos = isSimulating && simPos ? simPos : null;
+    if (!pos) {
+      try {
+        const loc = await apiService.getCurrentLocation();
+        pos = { lat: loc.latitude, lng: loc.longitude };
+      } catch (_) { return; }
+    }
+    if (!pos) return;
+
+    import('../services/crimeHotspots').then(({ haversineKm }) => {
+      SA_CRIME_HOTSPOTS?.forEach(h => {
+        if (alertedHotspotsRef.current.has(h.id)) {
+          if (haversineKm(pos.lat, pos.lng, h.lat, h.lng) > 0.5) {
+            alertedHotspotsRef.current.delete(h.id);
+          }
+        }
+      });
+    });
+  }, [isSimulating, simPos]);
+
+  useEffect(() => {
+    proximityIntervalRef.current = setInterval(() => {
+      runProximityScan();
+      cleanupAlertCache();
+    }, 3000);
+    return () => clearInterval(proximityIntervalRef.current);
+  }, [runProximityScan, cleanupAlertCache]);
+
+  // Broadcast re-route request to the map tab via localStorage
+  const requestReroute = useCallback(() => {
+    if (!dangerAlert) return;
+    localStorage.setItem('sr_reroute_request', JSON.stringify({
+      ts: Date.now(),
+      avoidLat: dangerAlert.lat,
+      avoidLng: dangerAlert.lng,
+      reason: dangerAlert.name,
+    }));
+    speak(`Re-routing to avoid ${dangerAlert.name}. Calculating safer route.`);
+    setDangerAlert(null);
+    setShowReroute(false);
+  }, [dangerAlert]);
+
+  // dismiss alert
+  const dismissAlert = useCallback(() => {
+    setDangerAlert(null);
+    setShowReroute(false);
+  }, []);
+
   const checkStepAdvancement = (pos) => {
     if (stepIdx >= navSteps.length - 1) return;
 
@@ -369,6 +477,45 @@ const HazardHUD = () => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
     >
+
+      {/* ── LIVE DANGER PROXIMITY BANNER ─────────────────────────────── */}
+      <AnimatePresence>
+        {dangerAlert && (
+          <motion.div
+            className="danger-proximity-banner"
+            style={{ borderColor: getRiskColor(dangerAlert.risk), boxShadow: `0 0 24px ${getRiskColor(dangerAlert.risk)}88` }}
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+          >
+            <div className="dpb-icon" style={{ color: getRiskColor(dangerAlert.risk) }}>⚠️</div>
+            <div className="dpb-body">
+              <div className="dpb-level" style={{ color: getRiskColor(dangerAlert.risk) }}>
+                {getRiskLevel(dangerAlert.risk)} RISK — {dangerAlert.type?.toUpperCase()}
+              </div>
+              <div className="dpb-name">{dangerAlert.name}</div>
+              <div className="dpb-street">{dangerAlert.street}</div>
+              <div className="dpb-dist">{dangerAlert.distM}m ahead · {dangerAlert.label}</div>
+            </div>
+            <div className="dpb-actions">
+              {showReroute && (
+                <button className="dpb-btn dpb-reroute" onClick={requestReroute}>
+                  🔃 Safer Route
+                </button>
+              )}
+              <button
+                className="dpb-btn dpb-mute"
+                onClick={() => setVoiceMuted(m => !m)}
+                title={voiceMuted ? 'Unmute voice' : 'Mute voice'}
+              >
+                {voiceMuted ? '🔇' : '🔊'}
+              </button>
+              <button className="dpb-btn dpb-dismiss" onClick={dismissAlert}>✕</button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* HUD Header */}
       <motion.div
