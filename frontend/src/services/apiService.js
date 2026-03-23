@@ -3,7 +3,7 @@
  * Handles all communication with the Python backend including user auth
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://110.238.78.155';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://110.238.78.155:8004';
 
 class ApiService {
   constructor() {
