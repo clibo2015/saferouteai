@@ -551,7 +551,8 @@ const SafeRouteMapComponent = ({
         ? { lat: userLocation.latitude ?? userLocation.lat, lng: userLocation.longitude ?? userLocation.lng }
         : null;
 
-    const userPos = isSimulating ? simPos : (livePos || parentUserPos);
+    // Only use simulated position if both isSimulating AND isNavigating are true
+    const userPos = (isSimulating && isNavigating) ? simPos : (livePos || parentUserPos);
 
     const defaultCenter = [-26.2041, 28.0473]; // JHB
     const mapCenter = userPos ? [userPos.lat, userPos.lng] : defaultCenter;
@@ -707,6 +708,24 @@ const SafeRouteMapComponent = ({
                 localStorage.setItem('sr_sim_pos', JSON.stringify(startPos));
                 localStorage.setItem('sr_sim_coord_idx', startIdx.toString());
             }
+        }
+    };
+
+    const resetSimulation = () => {
+        setIsSimulating(false);
+        setIsNavigating(false);
+        setSimPos(null);
+        setSimCoordIdx(0);
+        localStorage.removeItem('sr_sim_active');
+        localStorage.removeItem('sr_sim_pos');
+        localStorage.removeItem('sr_sim_coord_idx');
+        localStorage.removeItem('sr_nav_active');
+        stopGPSWatch();
+        // Force a fresh GPS check
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                setLivePos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            });
         }
     };
 
@@ -1208,6 +1227,14 @@ const SafeRouteMapComponent = ({
 
                     {searchError && <div className="sr-search-error">⚠️ {searchError}</div>}
                     {isCalculatingRoute && <div className="sr-calculating">🔄 Calculating safest route via real roads...</div>}
+                    
+                    {/* Add a "Return to Real Location" if stuck in simulation */}
+                    {isSimulating && !isNavigating && (
+                        <div className="sr-simulation-warning">
+                            <span>Currently in Simulation Mode</span>
+                            <button onClick={resetSimulation}>Return to Real Location</button>
+                        </div>
+                    )}
                 </div>
             )}
 

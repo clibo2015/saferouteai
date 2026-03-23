@@ -566,6 +566,38 @@
     }
 }
 
+.sr-simulation-warning {
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ff6b6b;
+    font-size: 13px;
+    backdrop-filter: blur(10px);
+}
+
+.sr-simulation-warning button {
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.sr-simulation-warning button:hover {
+    background: #ff5252;
+    transform: translateY(-1px);
+}
+
 /* ─── ROUTE CARD + START NAVIGATION BUTTON ───────────────────────────────── */
 .sr-route-card {
     position: absolute;

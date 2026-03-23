@@ -444,6 +444,18 @@ const HazardHUD = () => {
     }
   };
 
+  const resetSimulation = () => {
+    setIsSimulating(false);
+    setSimPos(null);
+    setSimCoordIdx(0);
+    localStorage.removeItem('sr_sim_active');
+    localStorage.removeItem('sr_sim_pos');
+    localStorage.removeItem('sr_sim_coord_idx');
+    localStorage.removeItem('sr_nav_active');
+    // Force a fresh GPS check logic
+    apiService.getCurrentLocation();
+  };
+
 
   const handleSwitchToMap = () => {
     navigate('/navigation');
@@ -741,6 +753,17 @@ const HazardHUD = () => {
         >
           <RadarIcon />
         </button>
+
+        {isSimulating && (
+          <button
+            className="control-btn secondary go-live"
+            onClick={resetSimulation}
+            style={{ color: '#ff6b6b', borderColor: 'rgba(255, 107, 107, 0.4)' }}
+            title="Return to Real Location"
+          >
+            🛰️
+          </button>
+        )}
 
         <motion.button
           className={`voice-btn ${voiceReporting ? 'active' : ''}`}
