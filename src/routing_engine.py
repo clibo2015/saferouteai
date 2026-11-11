@@ -235,9 +235,17 @@ class SafetyOptimizedRouter:
         mid_lng = (start_lng + end_lng) / 2
         
         # Import here to avoid circular imports
-        from data_ingestion import data_engine
-        
-        return data_engine.get_risk_score(mid_lat, mid_lng, timestamp)
+        try:
+            from data_ingestion import data_engine
+        except ImportError:
+            try:
+                from src.data_ingestion import data_engine
+            except ImportError:
+                data_engine = None
+
+        if data_engine:
+            return data_engine.get_risk_score(mid_lat, mid_lng, timestamp)
+        return {"risk_score": 0.4, "level": "medium"}
     
     def _calculate_overall_safety_score(self, segments: List[RouteSegment]) -> float:
         """Calculate overall safety score for the route"""
@@ -290,35 +298,43 @@ class SafetyOptimizedRouter:
     def _generate_route_insights(self, segments: List[RouteSegment], 
                                departure_time: datetime,
                                preferences: Dict[str, Any]) -> List[str]:
-        """Generate AI-powered insights about the route"""
-        insights = []
-        
-        # Analyze time-based risks
-        hour = departure_time.hour
-        if 18 <= hour <= 6:
-            insights.append("Route optimized for nighttime safety - avoiding poorly lit areas")
-        else:
-            insights.append("Daytime route selected with standard safety precautions")
-        
-        # Analyze risk levels
-        high_risk_segments = [seg for seg in segments if seg.risk_score > 0.7]
-        if high_risk_segments:
-            insights.append(f"Route includes {len(high_risk_segments)} higher-risk segments - extra caution advised")
-        else:
-            insights.append("Route maintains low risk levels throughout journey")
-        
-        # Load shedding considerations
-        if preferences.get("avoid_load_shedding", True):
-            insights.append("Route adjusted to avoid areas affected by current load shedding schedule")
-        
-        # Safety features
-        insights.append("Emergency contact points and safe zones identified along route")
-        
-        # Traffic and timing
-        if 7 <= hour <= 9 or 16 <= hour <= 18:
-            insights.append("Peak traffic hours - route includes buffer time for congestion")
-        
-        return insights
+        """Generate AI-powered insights about the route via APInex Copilot or local heuristics"""
+        try:
+            try:
+                from ai_copilot import ai_copilot
+            except ImportError:
+                from src.ai_copilot import ai_copilot
+
+            total_dist = sum(seg.distance_km for seg in segments)
+            total_time = sum(seg.estimated_time_minutes for seg in segments)
+            safety = self._calculate_overall_safety_score(segments)
+            high_risk = [
+                {"title": f"Segment {seg.segment_id}", "severity": seg.risk_score}
+                for seg in segments
+                if seg.risk_score > 0.65
+            ]
+
+            summary = {
+                "total_distance_km": total_dist,
+                "total_time_minutes": total_time,
+                "overall_safety_score": safety,
+            }
+            return ai_copilot.generate_safety_briefing(summary, high_risk, departure_time)
+        except Exception as e:
+            logger.warning(f"AI insights fallback: {e}")
+            insights = []
+            hour = departure_time.hour
+            if 18 <= hour or hour <= 6:
+                insights.append("Route optimized for nighttime safety — avoiding poorly lit areas")
+            else:
+                insights.append("Daytime route selected with standard safety precautions")
+            high_risk_segments = [seg for seg in segments if seg.risk_score > 0.7]
+            if high_risk_segments:
+                insights.append(f"Route includes {len(high_risk_segments)} higher-risk segments — extra caution advised")
+            else:
+                insights.append("Route maintains low risk levels throughout journey")
+            insights.append("Emergency contact points and safe zones identified along route")
+            return insights
     
     def _calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
         """Calculate distance between two points in kilometers"""

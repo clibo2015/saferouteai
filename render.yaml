@@ -29,3 +29,9 @@ services:
         value: "13"
       - key: MAP_USER_AGENT
         value: "SafeRouteAI/1.0 (field-test; Stellenbosch)"
+      - key: APINEX_API_KEY
+        sync: false
+      - key: APINEX_BASE_URL
+        value: "https://api.apinex.bond/v1"
+      - key: APINEX_MODEL
+        value: "free/deepseek-v4.1-flash"

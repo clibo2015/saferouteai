@@ -38,6 +38,7 @@ try:
     from opensource_maps import map_service as map_kit_service
     from routing_engine import routing_engine
     from config import settings
+    from ai_copilot import ai_copilot
     MAP_SERVICES_AVAILABLE = True
     print("OK: Open-source map services (OSRM/Nominatim) loaded")
 except Exception as e:
@@ -221,6 +222,7 @@ async def root():
             "routing": "✅ OSRM" if MAP_SERVICES_AVAILABLE else "🔄 Mock Mode",
             "geocoding": "✅ Nominatim" if MAP_SERVICES_AVAILABLE else "🔄 Mock Mode",
             "maps": "✅ Leaflet/OSM",
+            "ai_copilot": f"✅ APInex ({ai_copilot.model})" if (ai_copilot and ai_copilot.is_configured()) else "🔄 Heuristic Fallback",
             "edge_ai": "✅ Ready (lazy)",
             "neon_database": "✅ Connected" if neon_connected else "❌ Offline",
             "authentication": "✅ Enabled" if neon_connected else "❌ Disabled"
@@ -610,6 +612,33 @@ async def analyze_driver_behavior(request: Dict[str, Any]):
         }
     except Exception as e:
         logger.error(f"Driver behavior analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# AI Safety Copilot (APInex)
+@app.post("/api/v1/ai/briefing")
+async def get_ai_safety_briefing(request: Dict[str, Any]):
+    """Generate dynamic AI safety briefing via APInex Gateway"""
+    try:
+        route_summary = request.get("route_summary", {})
+        hazards = request.get("hazards", [])
+        departure_time = request.get("departure_time")
+
+        dep_dt = datetime.now()
+        if departure_time:
+            try:
+                dep_dt = datetime.fromisoformat(departure_time.replace('Z', '+00:00')).replace(tzinfo=None)
+            except Exception:
+                pass
+
+        briefing = ai_copilot.generate_safety_briefing(route_summary, hazards, dep_dt)
+        return {
+            "success": True,
+            "briefing": briefing,
+            "provider": f"APInex ({ai_copilot.model})" if ai_copilot.is_configured() else "Local Heuristics",
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"AI briefing failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Route Optimization

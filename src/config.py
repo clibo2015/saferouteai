@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     # Optional external data
     eskom_se_push_key: Optional[str] = os.getenv("ESKOM_SE_PUSH_KEY")
 
+    # APInex AI Gateway (LLM Copilot)
+    apinex_api_key: Optional[str] = os.getenv("APINEX_API_KEY")
+    apinex_base_url: str = os.getenv("APINEX_BASE_URL", "https://api.apinex.bond/v1")
+    apinex_model: str = os.getenv("APINEX_MODEL", "free/deepseek-v4.1-flash")
+
     @property
     def production_mode(self) -> bool:
         return not self.demo_mode
