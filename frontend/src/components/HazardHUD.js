@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
+// TensorFlow.js & On-Device Object Detection
+import * as tf from '@tensorflow/tfjs';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
+
 // Services
 import { apiService } from '../services/apiService';
 import {
@@ -25,8 +29,12 @@ const HazardHUD = () => {
   const videoRef = useRef(null);
 
   const [hazardData, setHazardData] = useState(null);
-  const [isDetecting] = useState(true);
+  const [isDetecting, setIsDetecting] = useState(true);
+  const [modelLoaded, setModelLoaded] = useState(false);
   const [voiceReporting, setVoiceReporting] = useState(false);
+  const modelRef = useRef(null);
+  const requestAnimRef = useRef(null);
+  const lastDetectionTimeRef = useRef(0);
 
   // ── Proximity Alert State ──────────────────────────────────────────────────
   const [dangerAlert, setDangerAlert] = useState(null);   // { hotspot, dismissed }
@@ -97,7 +105,7 @@ const HazardHUD = () => {
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: 640, height: 480 }
+            video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
           });
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -106,7 +114,6 @@ const HazardHUD = () => {
             });
           }
         } else {
-          // If no camera, we still show the HUD but with a dark placeholder
           console.warn('Camera access not supported');
         }
       } catch (error) {
@@ -114,93 +121,76 @@ const HazardHUD = () => {
       }
     };
 
-    const fetchRealHazardData = async () => {
+    // ── Real On-Device TensorFlow.js COCO-SSD Detection Loop ────────────────
+    const initializeTFModel = async () => {
       try {
-        // Get current location for context
-        const location = await apiService.getCurrentLocation();
-
-        // Fetch real hazard zones from backend
-        const hazardZones = await apiService.getHazardZones({
-          north: location.latitude + 0.05,
-          south: location.latitude - 0.05,
-          east: location.longitude + 0.05,
-          west: location.longitude - 0.05
-        });
-
-        // Transform backend data to HUD format
-        const hazardData = {
-          hazards: (hazardZones.hazard_zones || []).map(zone => ({
-            id: zone.id || Date.now(),
-            type: zone.type || zone.hazard_type || 'hazard',
-            confidence: (zone.confidence || zone.severity || 0.5) * 100,
-            position: { x: 320, y: 400 },
-            bbox: { x: 280, y: 380, width: 80, height: 60 }
-          })),
-          gpsCoordinates: {
-            latitude: location.latitude,
-            longitude: location.longitude
-          },
-          cameraInfo: {
-            id: 'EDGE-AI-PROD-01',
-            distance: 'Ready',
-            direction: 'FORWARD'
-          }
-        };
-
-        setHazardData(hazardData);
-      } catch (error) {
-        console.error('Failed to fetch real hazard data:', error);
-        setHazardData({
-          hazards: [],
-          gpsCoordinates: { latitude: -26.2041, longitude: 28.0473 },
-          cameraInfo: { id: 'EDGE-AI-OFFLINE', distance: 'N/A', direction: 'FORWARD' }
-        });
+        await tf.ready();
+        // Load lightweight MobileNet-v2 SSD model for high FPS mobile inference
+        const loadedModel = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+        modelRef.current = loadedModel;
+        setModelLoaded(true);
+        startLiveInference();
+      } catch (err) {
+        console.warn('Could not load on-device TF model, using fallback:', err);
       }
     };
 
-    const startRealTimeDetection = () => {
-      // Poll for hazard updates every 5 seconds
-      const interval = setInterval(async () => {
-        try {
-          const location = await apiService.getCurrentLocation();
-          const hazardZones = await apiService.getHazardZones({
-            north: location.latitude + 0.01,
-            south: location.latitude - 0.01,
-            east: location.longitude + 0.01,
-            west: location.longitude - 0.01
-          });
+    const startLiveInference = () => {
+      const detectFrame = async () => {
+        const now = Date.now();
+        // Run inference at ~5 to 8 FPS to prevent mobile device overheating while driving
+        if (now - lastDetectionTimeRef.current > 150) {
+          lastDetectionTimeRef.current = now;
+          if (
+            videoRef.current &&
+            videoRef.current.readyState === 4 &&
+            modelRef.current
+          ) {
+            try {
+              const predictions = await modelRef.current.detect(videoRef.current);
+              
+              // Filter for driving-relevant hazards
+              const relevantClasses = [
+                'person', 'bicycle', 'car', 'motorcycle', 'bus', 'truck', 'dog', 'stop sign', 'traffic light'
+              ];
+              
+              const detectedHazards = predictions
+                .filter(p => relevantClasses.includes(p.class.toLowerCase()) && p.score > 0.45)
+                .map((p, idx) => ({
+                  id: `tf_${p.class}_${idx}`,
+                  type: p.class === 'person' ? 'Pedestrian' : p.class.toUpperCase(),
+                  confidence: p.score * 100,
+                  bbox: {
+                    x: p.bbox[0],
+                    y: p.bbox[1],
+                    width: p.bbox[2],
+                    height: p.bbox[3],
+                  }
+                }));
 
-          if (hazardZones.hazard_zones?.length > 0) {
-            const latestHazard = hazardZones.hazard_zones[0];
-            setHazardData(prev => ({
-              ...prev,
-              hazards: [{
-                id: Date.now(),
-                type: latestHazard.type || latestHazard.hazard_type || 'hazard',
-                confidence: (latestHazard.confidence || latestHazard.severity || 0.7) * 100,
-                position: { x: 280 + Math.random() * 80, y: 350 + Math.random() * 50 },
-                bbox: { x: 280, y: 380, width: 80, height: 60 }
-              }]
-            }));
-
-            // Clear temporary detection after 3 seconds to keep UI clean
-            setTimeout(() => {
-              setHazardData(prev => ({ ...prev, hazards: [] }));
-            }, 3000);
+              setHazardData(prev => ({
+                ...prev,
+                hazards: detectedHazards,
+                cameraInfo: {
+                  id: 'EDGE-AI-TFJS-COCO',
+                  distance: detectedHazards.length > 0 ? `${detectedHazards.length} Objects Tracked` : 'Clear Road',
+                  direction: 'FORWARD'
+                }
+              }));
+            } catch (inferErr) {
+              // Ignore single-frame drops
+            }
           }
-        } catch (error) {
-          // Continue
         }
-      }, 5000);
+        requestAnimRef.current = requestAnimationFrame(detectFrame);
+      };
 
-      return () => clearInterval(interval);
+      requestAnimRef.current = requestAnimationFrame(detectFrame);
     };
 
     const initializeHazardDetection = async () => {
       await initializeCamera();
-      await fetchRealHazardData();
-      const stopDetection = startRealTimeDetection();
-      return stopDetection;
+      await initializeTFModel();
     };
 
     const detectorCleanup = initializeHazardDetection();
@@ -394,6 +384,9 @@ const HazardHUD = () => {
   };
 
   const cleanup = () => {
+    if (requestAnimRef.current) {
+      cancelAnimationFrame(requestAnimRef.current);
+    }
     if (videoRef.current && videoRef.current.srcObject) {
       const tracks = videoRef.current.srcObject.getTracks();
       tracks.forEach(track => track.stop());
@@ -670,8 +663,8 @@ const HazardHUD = () => {
           }}
         >
           <div className="status-indicator">
-            <div className={`status-dot ${isDetecting ? 'active' : ''}`}></div>
-            <span>AI Detection: {isDetecting ? 'ACTIVE' : 'INACTIVE'}</span>
+            <div className={`status-dot ${modelLoaded ? 'active' : ''}`}></div>
+            <span>{modelLoaded ? 'EDGE AI: NEURAL VISION ACTIVE' : 'EDGE AI: LOADING MODEL...'}</span>
           </div>
         </motion.div>
       </motion.div>

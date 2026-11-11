@@ -31,7 +31,7 @@ jobs:
 
       - name: Install Frontend Dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Configure Backend URL & Build React Web Assets
         working-directory: frontend
