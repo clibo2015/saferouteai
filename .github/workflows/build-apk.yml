@@ -31,8 +31,8 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Gradle Cache
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Install Frontend Dependencies
         working-directory: frontend
@@ -48,6 +48,11 @@ jobs:
           fi
           npm run build
           npx cap sync android
+
+      - name: Accept Android SDK Licenses & Install Components
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "platforms;android-35" "platforms;android-36" "build-tools;34.0.0" || true
 
       - name: Make Gradle Executable
         working-directory: frontend/android
