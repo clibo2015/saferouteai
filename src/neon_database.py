@@ -69,13 +69,16 @@ class NeonDatabase:
         self.database_url = os.getenv("DATABASE_URL")
         self.pool = None
         self.connected = False
-        
+
         if not self.database_url:
-            logger.error("DATABASE_URL not found in environment variables")
-            raise ValueError("DATABASE_URL is required for Neon connection")
+            # Do not raise at import time: the API still boots (maps/routing work)
+            # and the auth endpoints report 503 until DATABASE_URL is configured.
+            logger.warning("DATABASE_URL not set — Neon database is disabled")
     
     async def connect(self):
         """Initialize connection pool to Neon database"""
+        if not self.database_url:
+            raise RuntimeError("DATABASE_URL is required for Neon connection")
         try:
             self.pool = await asyncpg.create_pool(
                 self.database_url,

@@ -405,11 +405,20 @@ function createDestIcon() {
 }
 
 // =============================================================================
-// MAP FOLLOWER — re-centers map on user while navigating
+// MAP FOLLOWER — re-centers map on user while navigating or on initial GPS fix
 // =============================================================================
 function MapFollower({ userPos, isNavigating, destination, routeCoords }) {
     const map = useMap();
     const navRef = useRef(false);
+    const initialCenteredRef = useRef(false);
+
+    // Initial recenter on real user GPS when first acquired
+    useEffect(() => {
+        if (!initialCenteredRef.current && userPos && !isNavigating) {
+            map.setView([userPos.lat, userPos.lng], 15, { animate: true, duration: 1.0 });
+            initialCenteredRef.current = true;
+        }
+    }, [userPos, isNavigating, map]);
 
     useEffect(() => {
         if (isNavigating && userPos) {
@@ -554,7 +563,7 @@ const SafeRouteMapComponent = ({
     // Only use simulated position if both isSimulating AND isNavigating are true
     const userPos = (isSimulating && isNavigating) ? simPos : (livePos || parentUserPos);
 
-    const defaultCenter = [-26.2041, 28.0473]; // JHB
+    const defaultCenter = [-33.9321, 18.8602]; // Stellenbosch field-test area
     const mapCenter = userPos ? [userPos.lat, userPos.lng] : defaultCenter;
     const allHotspots = [...SA_CRIME_HOTSPOTS, ...backendHotspots];
 
@@ -801,6 +810,21 @@ const SafeRouteMapComponent = ({
         const iv = setInterval(fetchLive, 60000);
         return () => clearInterval(iv);
     }, []);
+
+    // ── Acquire initial GPS location on mount ───────────────────────────────────
+    useEffect(() => {
+        if (!livePos && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLivePos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                },
+                (err) => {
+                    console.warn("Initial GPS lock pending or unavailable:", err.message);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+            );
+        }
+    }, [livePos]);
 
     // ── Incident polling during navigation ──────────────────────────────────────
     useEffect(() => {

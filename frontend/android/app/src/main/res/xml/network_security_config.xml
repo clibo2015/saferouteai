@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Production API must be HTTPS (Render). Cleartext is only allowed for
+         local development against a loopback/host-machine server. -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">110.238.78.155</domain>
         <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
     </domain-config>
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">saferouteai.duckdns.org</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

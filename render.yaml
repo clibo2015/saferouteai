@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: saferouteai-backend
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DEMO_MODE
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: OSRM_BASE_URL
+        value: https://router.project-osrm.org
+      - key: NOMINATIM_BASE_URL
+        value: https://nominatim.openstreetmap.org
+      - key: MAP_CENTER_LAT
+        value: "-33.9321"
+      - key: MAP_CENTER_LNG
+        value: "18.8602"
+      - key: MAP_DEFAULT_ZOOM
+        value: "13"
+      - key: MAP_USER_AGENT
+        value: "SafeRouteAI/1.0 (field-test; Stellenbosch)"

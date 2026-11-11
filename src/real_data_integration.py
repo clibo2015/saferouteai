@@ -61,17 +61,12 @@ class RealDataIntegrator:
             }
         }
         
-        # Initialize data cache - Force refresh for national data
+        # In-memory caches only. Do NOT delete files under data/ here: the same
+        # directory holds the source crime CSVs, and importing this module must
+        # never have destructive side effects.
         self.crime_data_cache = None
         self.load_shedding_cache = None
         self.road_network_cache = None
-        
-        # Clear any existing cache files to ensure fresh national data generation
-        if self.data_dir.exists():
-            for cache_file in self.data_dir.glob("*.csv"):
-                cache_file.unlink(missing_ok=True)
-            for cache_file in self.data_dir.glob("*.json"):
-                cache_file.unlink(missing_ok=True)
         
     def download_saps_crime_data(self) -> pd.DataFrame:
         """
@@ -654,10 +649,10 @@ class RealDataIntegrator:
                 "sample_data": load_shedding["areas"][0] if load_shedding["areas"] else None
             }
             
-            # 3. Road Network Data - Handled by Huawei Map Kit (See Routing Engine)
+            # 3. Road Network Data - Handled by OSRM (See Routing Engine)
             integrated_data["datasets"]["road_network"] = {
                 "status": "external_service",
-                "provider": "Huawei Map Kit"
+                "provider": "OSRM (OpenStreetMap)"
             }
             
             # 4. World Bank Survey - External Data source not currently integrated via API

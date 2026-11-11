@@ -1,0 +1,21 @@
+DATABASE_URL is not set — auth and journey history are disabled
+JWT_SECRET is using the insecure default value
+DATABASE_URL not set — Neon database is disabled
+INFO:     Started server process [6560]
+INFO:     Waiting for application startup.
+ERROR:src.api:Failed to connect to Neon database: DATABASE_URL is required for Neon connection
+INFO:src.api:Edge AI will load lazily on first request
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+OK: Open-source map services (OSRM/Nominatim) loaded
+OK: Neon database + auth loaded
+INFO:     127.0.0.1:52062 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52066 - "GET /api/v1/map/config HTTP/1.1" 200 OK
+INFO:src.api:Route optimization request: {'lat': -33.9338, 'lng': 18.8604} -> {'lat': -33.9195, 'lng': 18.836}
+INFO:routing_engine:Calculating safe route from (-33.9338, 18.8604) to (-33.9195, 18.836)
+INFO:routing_engine:Querying OSRM for route: (-33.9338,18.8604) -> (-33.9195,18.836)
+INFO:routing_engine:OSRM route: 47 segments, 4.22 km
+INFO:     127.0.0.1:52072 - "POST /api/v1/optimize-route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52074 - "POST /api/v1/map/geocode HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52076 - "GET /api/v1/map/safety-heatmap?south=-34.05&north=-33.85&west=18.75&east=18.95 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52077 - "POST /api/v1/auth/register HTTP/1.1" 503 Service Unavailable

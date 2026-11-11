@@ -289,7 +289,7 @@ const Dashboard = ({ backendStatus, user, onLogout }) => {
           </div>
         </motion.div>
 
-        {/* Powered by Huawei */}
+        {/* Map + routing stack */}
         <motion.div
           className="powered-by-section"
           initial={{ opacity: 0 }}
@@ -297,8 +297,8 @@ const Dashboard = ({ backendStatus, user, onLogout }) => {
           transition={{ delay: 1.5, duration: 0.6 }}
         >
           <span>Powered by</span>
-          <div className="huawei-logo">
-            🔴 <strong>HUAWEI CLOUD</strong>
+          <div className="powered-by-logo">
+            🌍 <strong>OPENSTREETMAP + OSRM</strong>
           </div>
           {dashboardData?.backendStatus && (
             <div className="backend-status">

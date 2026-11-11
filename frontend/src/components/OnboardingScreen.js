@@ -252,7 +252,7 @@ const OnboardingScreen = ({ onComplete }) => {
           />
           <FeatureItem
             icon="☁️"
-            text="Huawei Cloud Integration"
+            text="OpenStreetMap & OSRM Routing"
             delay={2.2}
           />
         </motion.div>
@@ -285,7 +285,7 @@ const OnboardingScreen = ({ onComplete }) => {
           </motion.button>
         </motion.div>
 
-        {/* Powered by Huawei */}
+        {/* Map + routing stack */}
         <motion.div
           className="powered-by-footer"
           initial={{ opacity: 0 }}
@@ -293,8 +293,8 @@ const OnboardingScreen = ({ onComplete }) => {
           transition={{ delay: 2.8, duration: 0.8 }}
         >
           <span>Powered by</span>
-          <div className="huawei-brand">
-            🔴 <strong>HUAWEI CLOUD</strong>
+          <div className="powered-by-logo">
+            🌍 <strong>OPENSTREETMAP + OSRM</strong>
           </div>
         </motion.div>
       </div>

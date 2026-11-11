@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-SafeRouteAI API with Huawei Map Kit Integration and Neon Database
-Production-ready API with real database and authentication
+SafeRouteAI API — open-source maps (OSRM/Nominatim/Leaflet) + Neon Database
+Huawei-free runtime for Stellenbosch field testing
 """
 import sys
 import os
@@ -21,125 +21,106 @@ sys.path.append('src')
 
 # Import services
 edge_ai_processor = None  # lazy-loaded in startup_event
+MAP_SERVICES_AVAILABLE = False
+NEON_AVAILABLE = False
+routing_engine = None
+settings = None
+neon_db = None
+User = None
+Journey = None
+HazardReport = None
+auth_service = None
+get_current_user = None
+get_current_user_optional = None
+map_kit_service = None
 
 try:
-    from huawei_map_kit import map_kit_service
-    from huawei_client import huawei_client
-    from data_ingestion import data_engine
-    from modelarts_integration import modelarts_engine
+    from opensource_maps import map_service as map_kit_service
     from routing_engine import routing_engine
-    from real_data_integration import real_data_integrator
     from config import settings
-    from neon_database import neon_db, User, Journey, HazardReport
-    from neon_auth import auth_service, get_current_user, get_current_user_optional
-    MAP_KIT_AVAILABLE = True
-    NEON_AVAILABLE = True
-    print("✅ Real services loaded successfully")
-except ImportError as e:
-    print(f"❌ Import error details: {e}")
-    print(f"Error type: {type(e)}")
+    MAP_SERVICES_AVAILABLE = True
+    print("OK: Open-source map services (OSRM/Nominatim) loaded")
+except Exception as e:
+    print(f"ERROR: Map/routing import error: {e}")
     import traceback
     traceback.print_exc()
-    MAP_KIT_AVAILABLE = False
-    NEON_AVAILABLE = False
-    
-    # Create mock service
-    class MockMapKitService:
+
+try:
+    from neon_database import neon_db, User, Journey, HazardReport
+    from neon_auth import auth_service, get_current_user, get_current_user_optional
+    NEON_AVAILABLE = True
+    print("OK: Neon database + auth loaded")
+except Exception as e:
+    print(f"ERROR: Neon import error: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Optional legacy modules — never required to boot
+try:
+    from data_ingestion import data_engine  # noqa: F401
+except ImportError:
+    data_engine = None
+try:
+    from real_data_integration import real_data_integrator  # noqa: F401
+except ImportError:
+    real_data_integrator = None
+
+if map_kit_service is None:
+    class MockMapService:
         def get_map_config(self):
             return {
-                "api_key": "mock_key", 
-                "region": "af-south-1",
-                "js_api_url": "https://mapapi.cloud.huawei.com/mapjs/v1/api/js",
+                "provider": "leaflet_osm",
                 "map_options": {
-                    "center": {"lat": -26.2041, "lng": 28.0473},
-                    "zoom": 10,
-                    "mapTypeId": "roadmap"
+                    "center": {"lat": -33.9321, "lng": 18.8602},
+                    "zoom": 13,
+                    "mapTypeId": "roadmap",
                 },
                 "south_africa_bounds": {
-                    "north": -22.0,
-                    "south": -35.0,
-                    "east": 33.0,
-                    "west": 16.0
-                }
+                    "north": -22.0, "south": -35.0, "east": 33.0, "west": 16.0
+                },
             }
-        
+
+        def get_real_gps_coordinates(self, address):
+            return {"lat": -33.9321, "lng": 18.8602}
+
         def get_real_time_markers(self, bounds=None):
-            return [
-                {
-                    "id": "marker_1",
-                    "position": {"lat": -26.2041, "lng": 28.0473},
-                    "title": "Crime Hotspot",
-                    "description": "High crime area - exercise caution",
-                    "type": "crime_hotspot", 
-                    "severity": 0.8
-                },
-                {
-                    "id": "marker_2",
-                    "position": {"lat": -26.2678, "lng": 27.8546},
-                    "title": "Road Hazard",
-                    "description": "Construction zone ahead",
-                    "type": "hazard", 
-                    "severity": 0.6
-                }
-            ]
-        
+            return []
+
         def get_hazard_zones(self, bounds=None):
-            return [
-                {
-                    "id": "zone_1",
-                    "center": {"lat": -26.2041, "lng": 28.0473}, 
-                    "radius": 500, 
-                    "type": "high_crime",
-                    "severity": 0.8,
-                    "confidence": 0.9
-                }
-            ]
-        
+            return []
+
         def get_safety_heatmap_data(self, bounds=None):
-            return [
-                {
-                    "location": {"lat": -26.2041, "lng": 28.0473},
-                    "weight": 0.8,
-                    "safety_score": 0.3,
-                    "risk_factors": ["high_crime", "poor_lighting"]
-                },
-                {
-                    "location": {"lat": -26.2678, "lng": 27.8546},
-                    "weight": 0.4,
-                    "safety_score": 0.7,
-                    "risk_factors": ["moderate_traffic"]
-                }
-            ]
-        
+            return []
+
         def report_user_hazard(self, lat, lng, hazard_type, description, severity):
             return f"hazard_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         def get_route_safety_analysis(self, waypoints):
             return {
                 "overall_safety_score": 0.6,
                 "average_risk": 0.4,
-                "high_risk_segments": [
-                    {"start": waypoints[0], "end": waypoints[1], "risk_level": 0.8}
-                ],
-                "hazards_along_route": [
-                    {"location": waypoints[0], "type": "crime_hotspot", "severity": 0.7}
-                ],
+                "high_risk_segments": [],
+                "hazards_along_route": [],
                 "safety_rating": "Fair",
-                "recommendations": ["Avoid area around waypoint 2"]
+                "recommendations": ["Mock analysis — map services unavailable"],
             }
-    
-    class MockEdgeAI:
-        def simulate_driver_behavior_analysis(self, sensor_data):
-            return {
-                "driver_behavior_score": 0.8,
-                "speed_assessment": "NORMAL",
-                "driving_style": "CAUTIOUS",
-                "alerts": [],
-                "recommendations": ["Maintain current driving pattern"]
-            }
-    
-    map_kit_service = MockMapKitService()
-    edge_ai_processor = MockEdgeAI()
+
+    map_kit_service = MockMapService()
+
+if not NEON_AVAILABLE:
+    class _AnonUser:
+        id = "anonymous"
+
+    async def get_current_user_optional():
+        return None
+
+    async def get_current_user():
+        raise HTTPException(status_code=503, detail="Auth unavailable — Neon not configured")
+
+def _database_ready() -> bool:
+    """True only when Neon is configured (DATABASE_URL present)."""
+    return bool(NEON_AVAILABLE and neon_db and getattr(neon_db, "database_url", None))
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -147,9 +128,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="SafeRouteAI API with Neon Database",
-    description="AI-powered route optimization with Huawei Map Kit and Neon PostgreSQL",
-    version="3.0.0"
+    title="SafeRouteAI API",
+    description="AI-powered route optimization with OSRM, Nominatim, Leaflet/OSM, and Neon PostgreSQL",
+    version="4.0.0"
 )
 
 # Add CORS middleware
@@ -192,24 +173,31 @@ class HazardReportRequest(BaseModel):
     description: str
     severity: float
 
+def _get_edge_ai_processor():
+    """Import/construct Edge AI on first use (keeps Render boot fast)."""
+    global edge_ai_processor
+    if edge_ai_processor is None:
+        from edge_ai_processor import EdgeAIProcessor
+
+        edge_ai_processor = EdgeAIProcessor()
+    return edge_ai_processor
+
+
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database connection on startup"""
-    global edge_ai_processor
+    """Initialize database connection on startup.
+
+    Edge AI (YOLO) is deliberately NOT imported here: it pulls in torch/cv2
+    and would slow down or time out Render's free-tier boot.
+    """
     if NEON_AVAILABLE:
         try:
             await neon_db.connect()
-            logger.info("✅ Neon database connected successfully")
+            logger.info("Neon database connected successfully")
         except Exception as e:
             logger.error(f"Failed to connect to Neon database: {e}")
-    # Lazy-load EdgeAIProcessor after port is bound to avoid Render startup timeout
-    try:
-        from edge_ai_processor import EdgeAIProcessor
-        edge_ai_processor = EdgeAIProcessor()
-        logger.info("✅ EdgeAIProcessor loaded successfully")
-    except Exception as e:
-        logger.warning(f"EdgeAIProcessor not available: {e}")
+    logger.info("Edge AI will load lazily on first request")
 
 # Shutdown event
 @app.on_event("shutdown")
@@ -221,17 +209,21 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     """API root endpoint"""
+    # NEON_AVAILABLE only means the modules imported; the pool may still be down.
+    neon_connected = bool(NEON_AVAILABLE and neon_db and getattr(neon_db, "connected", False))
     return {
-        "message": "SafeRouteAI API with Neon Database Integration",
-        "version": "3.0.0",
-        "map_kit_available": MAP_KIT_AVAILABLE,
-        "neon_database": NEON_AVAILABLE,
+        "message": "SafeRouteAI API — Huawei-free (OSRM + Nominatim + Neon)",
+        "version": "4.0.0",
+        "map_services_available": MAP_SERVICES_AVAILABLE,
+        "neon_database": neon_connected,
+        "field_test_area": "Stellenbosch",
         "services": {
-            "map_kit": "✅ Ready" if MAP_KIT_AVAILABLE else "🔄 Mock Mode",
-            "edge_ai": "✅ Ready",
-            "real_time_hazards": "✅ Ready",
-            "neon_database": "✅ Connected" if NEON_AVAILABLE else "❌ Offline",
-            "authentication": "✅ Enabled" if NEON_AVAILABLE else "❌ Disabled"
+            "routing": "✅ OSRM" if MAP_SERVICES_AVAILABLE else "🔄 Mock Mode",
+            "geocoding": "✅ Nominatim" if MAP_SERVICES_AVAILABLE else "🔄 Mock Mode",
+            "maps": "✅ Leaflet/OSM",
+            "edge_ai": "✅ Ready (lazy)",
+            "neon_database": "✅ Connected" if neon_connected else "❌ Offline",
+            "authentication": "✅ Enabled" if neon_connected else "❌ Disabled"
         },
         "capabilities": [
             "Real-time hazard detection",
@@ -249,7 +241,7 @@ async def root():
 @app.post("/api/v1/auth/register")
 async def register_user(request: RegisterRequest):
     """Register a new user"""
-    if not NEON_AVAILABLE:
+    if not _database_ready():
         raise HTTPException(status_code=503, detail="Database not available")
     
     try:
@@ -283,7 +275,7 @@ async def register_user(request: RegisterRequest):
 @app.post("/api/v1/auth/login")
 async def login_user(request: LoginRequest):
     """Authenticate user and return access token"""
-    if not NEON_AVAILABLE:
+    if not _database_ready():
         raise HTTPException(status_code=503, detail="Database not available")
     
     try:
@@ -379,10 +371,10 @@ async def update_user_preferences(
         logger.error(f"Failed to update preferences: {e}")
         raise HTTPException(status_code=500, detail="Failed to update preferences")
 
-# Map Kit Endpoints
+# Map / geocode endpoints (OSRM + Nominatim + Leaflet)
 @app.get("/api/v1/map/config")
 async def get_map_config():
-    """Get Huawei Map Kit configuration for frontend"""
+    """Get Leaflet/OSM map configuration for frontend"""
     try:
         config = map_kit_service.get_map_config()
         return {
@@ -395,7 +387,8 @@ async def get_map_config():
                 "edge_ai_detection",
                 "user_reporting"
             ],
-            "map_kit_available": MAP_KIT_AVAILABLE
+            "map_services_available": MAP_SERVICES_AVAILABLE,
+            "provider": "leaflet_osm_osrm_nominatim"
         }
     except Exception as e:
         logger.error(f"Map config retrieval failed: {e}")
@@ -403,7 +396,7 @@ async def get_map_config():
 
 @app.post("/api/v1/map/geocode")
 async def geocode_address(request: Dict[str, Any]):
-    """Geocode an address string to GPS coordinates"""
+    """Geocode an address string to GPS coordinates via Nominatim"""
     try:
         address = request.get("address")
         if not address:
@@ -415,19 +408,20 @@ async def geocode_address(request: Dict[str, Any]):
             return {
                 "success": True,
                 "location": location,
-                "address": address
+                "address": address,
+                "provider": "nominatim"
             }
         else:
-            # Fallback for demo if geocoding fails or not in production
-            if not MAP_KIT_AVAILABLE:
-                # Return Johannesburg for demo
-                return {
-                    "success": True,
-                    "location": {"lat": -26.2041, "lng": 28.0473},
-                    "address": address,
-                    "is_demo": True
-                }
-            raise HTTPException(status_code=404, detail="Address not found")
+            # Stellenbosch fallback when geocoding fails
+            return {
+                "success": True,
+                "location": {"lat": -33.9321, "lng": 18.8602},
+                "address": address,
+                "is_fallback": True,
+                "provider": "stellenbosch_fallback"
+            }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Geocoding failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -453,7 +447,7 @@ async def get_map_markers(
             "total_markers": len(markers),
             "bounds": bounds,
             "last_updated": datetime.now().isoformat(),
-            "data_source": "Real-time SAPS + Edge AI" if MAP_KIT_AVAILABLE else "Mock Data"
+            "data_source": "Stellenbosch hotspots + Edge AI" if MAP_SERVICES_AVAILABLE else "Mock Data"
         }
     except Exception as e:
         logger.error(f"Map markers retrieval failed: {e}")
@@ -480,7 +474,7 @@ async def get_hazard_zones(
             "total_zones": len(zones),
             "bounds": bounds,
             "last_updated": datetime.now().isoformat(),
-            "coverage": "All of South Africa" if MAP_KIT_AVAILABLE else "Mock Coverage"
+            "coverage": "Stellenbosch & surrounds" if MAP_SERVICES_AVAILABLE else "Mock Coverage"
         }
     except Exception as e:
         logger.error(f"Hazard zones retrieval failed: {e}")
@@ -558,7 +552,7 @@ async def report_hazard(
                 "duration_minutes": 120,
                 "affected_users": "nearby_drivers"
             },
-            "processing_mode": "Database" if NEON_AVAILABLE and current_user else "Map Kit"
+            "processing_mode": "Database" if NEON_AVAILABLE and current_user else "Local"
         }
     except Exception as e:
         logger.error(f"Hazard reporting failed: {e}")
@@ -583,7 +577,7 @@ async def analyze_route_safety(request: Dict[str, Any]):
             "safety_analysis": safety_analysis,
             "route_length_km": len(waypoints) * 5,  # Approximate
             "analysis_timestamp": datetime.now().isoformat(),
-            "analysis_method": "AI + Real Data" if MAP_KIT_AVAILABLE else "Mock Analysis"
+            "analysis_method": "AI + Open Data" if MAP_SERVICES_AVAILABLE else "Mock Analysis"
         }
     except Exception as e:
         logger.error(f"Route safety analysis failed: {e}")
@@ -596,8 +590,14 @@ async def analyze_driver_behavior(request: Dict[str, Any]):
     try:
         sensor_data = request.get("sensor_data", {})
         analysis_type = request.get("analysis_type", "behavior")
-        
-        behavior_analysis = edge_ai_processor.simulate_driver_behavior_analysis(sensor_data)
+
+        try:
+            processor = _get_edge_ai_processor()
+        except Exception as e:
+            logger.warning(f"Edge AI unavailable: {e}")
+            raise HTTPException(status_code=503, detail="Edge AI unavailable on this server")
+
+        behavior_analysis = processor.analyze_driver_behavior(sensor_data)
         
         return {
             "success": True,
@@ -605,7 +605,7 @@ async def analyze_driver_behavior(request: Dict[str, Any]):
             "system_info": {
                 "analysis_type": analysis_type,
                 "edge_processing": True,
-                "real_time": MAP_KIT_AVAILABLE
+                "real_time": MAP_SERVICES_AVAILABLE
             }
         }
     except Exception as e:
@@ -615,7 +615,7 @@ async def analyze_driver_behavior(request: Dict[str, Any]):
 # Route Optimization
 @app.post("/api/v1/optimize-route")
 async def optimize_route(request: Dict[str, Any]):
-    """Complete route optimization using all SafeRoute AI modules"""
+    """Complete route optimization using OSRM + local risk scoring"""
     try:
         start_point = request.get("start_point", {})
         end_point = request.get("end_point", {})
@@ -634,8 +634,7 @@ async def optimize_route(request: Dict[str, Any]):
                 logger.warning(f"Invalid departure time format: {e}")
                 departure_dt = datetime.now()
         
-        if MAP_KIT_AVAILABLE:
-            # Calculate optimized route using real services
+        if MAP_SERVICES_AVAILABLE and routing_engine is not None:
             route_result = routing_engine.calculate_safe_route(
                 start_point["lat"],
                 start_point["lng"],
@@ -662,12 +661,14 @@ async def optimize_route(request: Dict[str, Any]):
                     "total_distance_km": route_result.total_distance_km,
                     "total_time_minutes": route_result.total_time_minutes,
                     "overall_safety_score": route_result.overall_safety_score,
-                    "optimization_weights": route_result.optimization_weights
+                    "optimization_weights": route_result.optimization_weights,
+                    "ai_insights": route_result.ai_insights,
+                    "alternative_routes": route_result.alternative_routes,
                 },
                 "system_info": {
-                    "demo_mode": getattr(settings, 'demo_mode', True),
+                    "demo_mode": getattr(settings, 'demo_mode', False) if settings else False,
                     "processing_time": datetime.now().isoformat(),
-                    "huawei_services_used": ["ModelArts", "GaussDB", "Map_Kit"]
+                    "services_used": ["OSRM", "Nominatim", "LocalRiskModel", "Neon"]
                 }
             }
         else:
@@ -714,7 +715,7 @@ async def optimize_route(request: Dict[str, Any]):
                 "system_info": {
                     "demo_mode": True,
                     "processing_time": datetime.now().isoformat(),
-                    "huawei_services_used": ["Mock_Services"]
+                    "services_used": ["Mock_Services"]
                 }
             }
             
@@ -729,7 +730,7 @@ async def save_journey(
     current_user: User = Depends(get_current_user)
 ):
     """Save a completed journey"""
-    if not NEON_AVAILABLE:
+    if not _database_ready():
         raise HTTPException(status_code=503, detail="Database not available")
     
     try:
@@ -766,7 +767,7 @@ async def get_user_journeys(
     current_user: User = Depends(get_current_user)
 ):
     """Get user's journey history"""
-    if not NEON_AVAILABLE:
+    if not _database_ready():
         raise HTTPException(status_code=503, detail="Database not available")
     
     try:
@@ -813,7 +814,7 @@ async def get_user_hazard_reports(
     current_user: User = Depends(get_current_user)
 ):
     """Get user's hazard reports"""
-    if not NEON_AVAILABLE:
+    if not _database_ready():
         raise HTTPException(status_code=503, detail="Database not available")
     
     try:
@@ -847,7 +848,7 @@ async def get_user_hazard_reports(
 @app.get("/api/v1/stats")
 async def get_database_stats(current_user: User = Depends(get_current_user)):
     """Get database statistics (admin only in production)"""
-    if not NEON_AVAILABLE:
+    if not _database_ready():
         raise HTTPException(status_code=503, detail="Database not available")
     
     try:
@@ -864,13 +865,12 @@ async def get_database_stats(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Failed to get statistics")
 
 if __name__ == "__main__":
-    print("🇿🇦 Starting SafeRouteAI API with Huawei Map Kit Integration")
-    print("="*70)
-    print("📡 API will be available at: http://localhost:8004")
-    print("📚 API docs at: http://localhost:8004/docs")
-    print(f"🗺️  Map Kit: {'ENABLED' if MAP_KIT_AVAILABLE else 'MOCK MODE'}")
-    print("="*70)
-    
-    import os
-    port = int(os.environ.get("PORT", 8004))
+    # Render injects PORT; local runs default to 8004.
+    port = int(os.environ.get("PORT", os.environ.get("API_PORT", "8004")))
+    print("=" * 70)
+    print("Starting SafeRouteAI API (OSRM + Nominatim + Neon, no Huawei)")
+    print(f"API available at: http://localhost:{port}")
+    print(f"API docs at: http://localhost:{port}/docs")
+    print(f"Maps: {'OSRM + Nominatim' if MAP_SERVICES_AVAILABLE else 'MOCK MODE'}")
+    print("=" * 70)
     uvicorn.run(app, host="0.0.0.0", port=port)

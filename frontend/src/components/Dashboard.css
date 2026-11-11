@@ -373,7 +373,7 @@
   color: var(--text-muted);
 }
 
-.huawei-logo {
+.powered-by-logo {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);

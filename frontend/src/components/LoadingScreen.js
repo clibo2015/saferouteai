@@ -64,13 +64,13 @@ const LoadingScreen = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.8 }}
         >
-          <LoadingStep text="Connecting to Huawei Cloud" delay={0} />
+          <LoadingStep text="Connecting to SafeRouteAI services" delay={0} />
           <LoadingStep text="Loading AI Models" delay={0.5} />
           <LoadingStep text="Initializing Safety Systems" delay={1} />
           <LoadingStep text="Ready for Secure Logistics" delay={1.5} />
         </motion.div>
 
-        {/* Powered by Huawei */}
+        {/* Map + routing stack */}
         <motion.div 
           className="powered-by"
           initial={{ opacity: 0 }}
@@ -78,8 +78,8 @@ const LoadingScreen = () => {
           transition={{ delay: 1.8, duration: 0.6 }}
         >
           <span>Powered by</span>
-          <div className="huawei-logo">
-            🔴 <strong>HUAWEI CLOUD</strong>
+          <div className="powered-by-logo">
+            🌍 <strong>OPENSTREETMAP + OSRM</strong>
           </div>
         </motion.div>
       </div>

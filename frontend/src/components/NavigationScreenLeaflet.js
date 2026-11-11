@@ -162,12 +162,12 @@ const NavigationScreen = () => {
     try {
       setIsSearching(true);
       
-      // Use Huawei Location Kit for geocoding
+      // Use Nominatim (OpenStreetMap) for geocoding
       const res = await apiService.geocode(searchQuery);
 
       if (res.success) {
         const dest = res.location;
-        const start = userLocation || { latitude: -26.2041, longitude: 28.0473 };
+        const start = userLocation || { latitude: -33.9321, longitude: 18.8602 };
 
         // Generate route to destination
         const routeToDest = {
@@ -398,7 +398,7 @@ const NavigationScreen = () => {
 
             <div className="powered-by-mini">
               <span>Powered by</span>
-              <div className="huawei-mini">🔴 <strong>HUAWEI LOCATION KIT</strong></div>
+              <div className="powered-by-mini-brand">🌍 <strong>OPENSTREETMAP</strong></div>
             </div>
           </div>
         </motion.div>

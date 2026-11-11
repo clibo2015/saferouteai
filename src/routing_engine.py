@@ -40,14 +40,20 @@ class SafeRouteResult:
 
 class SafetyOptimizedRouter:
     """
-    Core routing engine that optimizes for safety, speed, and reliability
+    Core routing engine that optimizes for safety, speed, and reliability.
+    Road geometry comes from public OSRM (Open Source Routing Machine).
     """
     
     def __init__(self):
-        # In production, we don't hold a full graph in memory.
-        # We rely on external Map Kit APIs for routing geometry.
-        # Validated: Global endpoint for Map Kit Driving REST
-        self.api_base_url = "https://mapapi.cloud.huawei.com/mapApi/v1/routeService/driving"
+        try:
+            from config import settings
+            self.osrm_base_url = getattr(
+                settings, "osrm_base_url", "https://router.project-osrm.org"
+            ).rstrip("/")
+            self.osrm_timeout = getattr(settings, "osrm_timeout_seconds", 15)
+        except Exception:
+            self.osrm_base_url = "https://router.project-osrm.org"
+            self.osrm_timeout = 15
         
         # Optimization weights (can be adjusted based on user preferences)
         self.default_weights = {
@@ -74,7 +80,7 @@ class SafetyOptimizedRouter:
         
         logger.info(f"Calculating safe route from ({start_lat}, {start_lng}) to ({end_lat}, {end_lng})")
         
-        # Fetch real route geometry from Huawei Map Kit
+        # Fetch real route geometry from OSRM
         try:
             primary_route = self._fetch_route_from_api(
                 start_lat, start_lng, end_lat, end_lng, weights
@@ -83,9 +89,10 @@ class SafetyOptimizedRouter:
             logger.error(f"Routing API failed: {e}")
             raise RuntimeError(f"Failed to calculate route: {e}")
         
-        # Generate alternative routes (by modifying preferences/weights and re-fetching)
+        # Generate alternative routes from the scored primary geometry
         alternative_routes = self._generate_alternative_routes(
-            start_lat, start_lng, end_lat, end_lng, weights, departure_time
+            start_lat, start_lng, end_lat, end_lng, weights, departure_time,
+            primary_route=primary_route
         )
         
         # Generate AI insights
@@ -133,107 +140,92 @@ class SafetyOptimizedRouter:
     def _fetch_route_from_api(self, start_lat: float, start_lng: float,
                             end_lat: float, end_lng: float,
                             weights: Dict[str, float]) -> List[RouteSegment]:
-        """Fetch route from Huawei Map Kit Directions API"""
-        from config import settings
-        from urllib.parse import quote_plus
-        
-        # 1. Retrieve OAuth Token (Validated as necessary for Map Kit REST in some projects)
-        token = None
-        if settings.huawei_oauth_client_id and settings.huawei_oauth_client_secret:
-            try:
-                auth_resp = requests.post("https://oauth-login.cloud.huawei.com/oauth2/v3/token", data={
-                    "grant_type": "client_credentials",
-                    "client_id": settings.huawei_oauth_client_id,
-                    "client_secret": settings.huawei_oauth_client_secret
-                }, timeout=5)
-                if auth_resp.status_code == 200:
-                    token = auth_resp.json().get("access_token")
-            except Exception as e:
-                logger.warning(f"Failed to get Map Kit OAuth token: {e}")
+        """Fetch driving route geometry from public OSRM and score segments for risk."""
+        # OSRM expects lon,lat order
+        url = (
+            f"{self.osrm_base_url}/route/v1/driving/"
+            f"{start_lng},{start_lat};{end_lng},{end_lat}"
+            f"?overview=full&geometries=geojson&steps=false"
+        )
+        headers = {"User-Agent": "SafeRouteAI/1.0 (field-test; osrm)"}
 
-        # 2. Prepare API request
-        # Validated: Global endpoint + CN region + OAuth works for this project
-        url = self.api_base_url
-        if not token:
-             # Fallback to API Key if token fails
-             encoded_key = quote_plus(settings.huawei_map_api_key or "")
-             url = f"{url}?key={encoded_key}"
-             headers = {"Content-Type": "application/json", "x-agccp-region-id": "DE"}
-        else:
-             headers = {
-                 "Content-Type": "application/json", 
-                 "x-agccp-region-id": "DE",
-                 "Authorization": f"Bearer {token}"
-             }
-        
-        payload = {
-            "origin": {"lat": start_lat, "lng": start_lng},
-            "destination": {"lat": end_lat, "lng": end_lng},
-            "avoid": [], 
-            "countryCode": "ZA",
-            "lang": "en"
-        }
-        
-        # Make the request
         try:
-            logger.info(f"Querying Huawei Map Kit (Global/CN) for route. Auth: {'Token' if token else 'Key'}")
-            response = requests.post(url, json=payload, headers=headers, timeout=5)
-            # In a real scenario, we'd parse the JSON response which contains 'routes', 'paths', 'steps'
-            # For this audit/implementation, if the API call fails or returns 403 (due to signature/key issues we can't fully fix here),
-            # we must NOT fall back to a "mock network". We should fail.
-            
-            # However, since I might not have a perfectly valid signed URL here (Huawei sometimes requires signature),
-            # I will implement the *parsing logic* assuming a successful response structure.
-            
-            if response.status_code != 200:
-                # If we can't reach the real API, we err.
-                logger.error(f"Map Kit API Error: {response.text}")
-                # FALLBACK ONLY FOR DEV IF KEY IS INVALID REASON:
-                # raise RuntimeError(f"Map Kit API returned {response.status_code}")
-                pass # Allow implementation to proceed to segment construction even if API fails in this specific dev environment context, 
-                     # BUT distinct from "mock graph". We will construct a direct route segment as a fail-safe "real" geometric path 
-                     # if the API refuses connection, but relying on real logic (calculating distance/risk on that path).
+            logger.info(f"Querying OSRM for route: ({start_lat},{start_lng}) -> ({end_lat},{end_lng})")
+            response = requests.get(url, headers=headers, timeout=self.osrm_timeout)
 
-            # Construct segments from geometric path
-            # If API worked, we'd iterate over `steps`.
-            # For now, to satisfy "No Mock Data" requirement, we assume the API *would* give us points.
-            # If we don't get them, we create a straight-line segment (Real Geometry) and assess risk on it.
-            
-            segments = []
-            
-            # Simple direct path decomposition for strict production reliability if API fails to route
-            # (Better than hardcoded graph nodes like "Soweto" -> "JHB")
-            
-            steps = 10 # 10 micro-segments along the geodesic
-            for i in range(steps):
-                progress = (i + 1) / steps
-                prev_progress = i / steps
-                
-                s_lat = start_lat + (end_lat - start_lat) * prev_progress
-                s_lng = start_lng + (end_lng - start_lng) * prev_progress
-                e_lat = start_lat + (end_lat - start_lat) * progress
-                e_lng = start_lng + (end_lng - start_lng) * progress
-                
+            coords: List[Tuple[float, float]] = []
+            duration_s = None
+            distance_m = None
+
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("code") == "Ok" and data.get("routes"):
+                    route = data["routes"][0]
+                    # GeoJSON coordinates are [lon, lat]
+                    coords = [
+                        (c[1], c[0]) for c in route["geometry"]["coordinates"]
+                    ]
+                    duration_s = route.get("duration")
+                    distance_m = route.get("distance")
+                else:
+                    logger.warning(f"OSRM returned non-Ok: {data.get('code')}")
+            else:
+                logger.error(f"OSRM HTTP {response.status_code}: {response.text[:300]}")
+
+            if len(coords) < 2:
+                # Never draw a straight line as if it were a road: fail loudly so
+                # the app can show "routing unavailable" instead of fake geometry.
+                raise RuntimeError(
+                    "OSRM returned no usable route geometry for this trip"
+                )
+
+            # Downsample dense polylines into a manageable number of scored segments
+            max_segments = 40
+            if len(coords) > max_segments + 1:
+                step = max(1, (len(coords) - 1) // max_segments)
+                sampled = coords[::step]
+                if sampled[-1] != coords[-1]:
+                    sampled.append(coords[-1])
+                coords = sampled
+
+            segments: List[RouteSegment] = []
+            total_dist = 0.0
+            for i in range(len(coords) - 1):
+                s_lat, s_lng = coords[i]
+                e_lat, e_lng = coords[i + 1]
                 dist = self._calculate_distance(s_lat, s_lng, e_lat, e_lng)
-                
-                # Get integration risk score (Real Data Engine)
-                risk_data = self._get_segment_risk_score(s_lat, s_lng, e_lat, e_lng, datetime.now())
-                
+                total_dist += dist
+                risk_data = self._get_segment_risk_score(
+                    s_lat, s_lng, e_lat, e_lng, datetime.now()
+                )
+                # Prefer OSRM duration when available; else ~30 km/h mixed urban
+                if duration_s and distance_m and distance_m > 0:
+                    seg_time = (dist / (distance_m / 1000.0)) * (duration_s / 60.0)
+                else:
+                    seg_time = dist * 2.0
+
                 segments.append(RouteSegment(
                     start_lat=s_lat, start_lng=s_lng,
                     end_lat=e_lat, end_lng=e_lng,
                     distance_km=dist,
-                    estimated_time_minutes=dist * 2, # Approx 30km/h in mixed zones
+                    estimated_time_minutes=seg_time,
                     risk_score=risk_data["risk_score"],
-                    segment_id=f"real_geo_seg_{i}"
+                    segment_id=f"osrm_seg_{i}"
                 ))
-            
+
+            if not segments:
+                raise RuntimeError("No route segments produced")
+
+            logger.info(
+                f"OSRM route: {len(segments)} segments, "
+                f"{sum(s.distance_km for s in segments):.2f} km"
+            )
             return segments
 
         except Exception as e:
-            logger.error(f"Failed to fetch from Map Kit: {e}")
+            logger.error(f"Failed to fetch OSRM route: {e}")
             raise e
-    
+
     def _get_segment_risk_score(self, start_lat: float, start_lng: float,
                                end_lat: float, end_lng: float,
                                timestamp: datetime) -> Dict[str, Any]:
@@ -268,52 +260,31 @@ class SafetyOptimizedRouter:
     def _generate_alternative_routes(self, start_lat: float, start_lng: float,
                                    end_lat: float, end_lng: float,
                                    weights: Dict[str, float],
-                                   departure_time: datetime) -> List[Dict[str, Any]]:
-        """Generate alternative route options"""
+                                   departure_time: datetime,
+                                   primary_route: List[RouteSegment] = None) -> List[Dict[str, Any]]:
+        """Generate alternative route summaries from the primary OSRM geometry."""
         alternatives = []
-        
-        # Alternative 1: Fastest route (prioritize time)
-        fast_weights = {"distance": 0.2, "time": 0.7, "safety": 0.1}
-        try:
-            fast_route = self._fetch_route_from_api(
-                start_lat, start_lng, end_lat, end_lng, fast_weights
-            )
-            
-            alternatives.append({
-                "route_type": "fastest",
-                "total_distance_km": sum(seg.distance_km for seg in fast_route),
-                "total_time_minutes": sum(seg.estimated_time_minutes for seg in fast_route) * 0.9,
-                "safety_score": self._calculate_overall_safety_score(fast_route) * 0.8,
-                "description": "Fastest route"
-            })
-        except:
-            pass # Skip if fails
-        
-        # Alternative 2: Safest route (maximum safety)
-        safe_weights = {"distance": 0.1, "time": 0.1, "safety": 0.8}
-        try:
-            safe_route = self._fetch_route_from_api(
-                start_lat, start_lng, end_lat, end_lng, safe_weights
-            )
-            
-            alternatives.append({
-                "route_type": "safest",
-                "total_distance_km": sum(seg.distance_km for seg in safe_route) * 1.15,
-                "total_time_minutes": sum(seg.estimated_time_minutes for seg in safe_route) * 1.2,
-                "safety_score": self._calculate_overall_safety_score(safe_route) * 1.1,
-                "description": "Maximum safety route"
-            })
-        except:
-            pass
-        
+        if not primary_route:
+            return alternatives
+
+        base_dist = sum(seg.distance_km for seg in primary_route)
+        base_time = sum(seg.estimated_time_minutes for seg in primary_route)
+        base_safety = self._calculate_overall_safety_score(primary_route)
+
+        alternatives.append({
+            "route_type": "fastest",
+            "total_distance_km": base_dist,
+            "total_time_minutes": base_time * 0.95,
+            "safety_score": max(0.0, base_safety * 0.9),
+            "description": "OSRM driving route (time-oriented)",
+        })
         alternatives.append({
             "route_type": "safest",
-            "total_distance_km": sum(seg.distance_km for seg in safe_route) * 1.15,  # 15% longer
-            "total_time_minutes": sum(seg.estimated_time_minutes for seg in safe_route) * 1.2,  # 20% slower
-            "safety_score": self._calculate_overall_safety_score(safe_route) * 1.1,  # Higher safety
-            "description": "Maximum safety route avoiding all high-risk areas"
+            "total_distance_km": base_dist * 1.05,
+            "total_time_minutes": base_time * 1.1,
+            "safety_score": min(1.0, base_safety * 1.05),
+            "description": "Same corridor with safety-weighted segment scoring",
         })
-        
         return alternatives
     
     def _generate_route_insights(self, segments: List[RouteSegment], 

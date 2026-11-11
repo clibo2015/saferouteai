@@ -3,7 +3,20 @@
  * Handles all communication with the Python backend including user auth
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://110.238.78.155:8004';
+const CONFIGURED_API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
+
+if (!CONFIGURED_API_URL) {
+  const message =
+    'REACT_APP_API_URL is not set. Build with ' +
+    'REACT_APP_API_URL=https://<your-render-service>.onrender.com';
+  if (process.env.NODE_ENV === 'production') {
+    // Fail loudly: a production/Capacitor build must not ship without an API host.
+    throw new Error(message);
+  }
+  console.warn(`${message} — falling back to http://localhost:8004 for development`);
+}
+
+const API_BASE_URL = CONFIGURED_API_URL || 'http://localhost:8004';
 
 class ApiService {
   constructor() {
@@ -215,28 +228,6 @@ class ApiService {
     } catch (e) {}
   }
 
-  // Data Management
-  async uploadData() {
-    return this.post('/data/upload');
-  }
-
-  // Training and Model Management
-  async startTraining(jobConfig) {
-    return this.post('/training/start', jobConfig);
-  }
-
-  async getTrainingJobs() {
-    return this.get('/training/jobs');
-  }
-
-  async getTrainingJob(jobId) {
-    return this.get(`/training/jobs/${jobId}`);
-  }
-
-  async deployModel(jobId, endpointName = 'saferoute-frontend') {
-    return this.post(`/model/deploy/${jobId}?endpoint_name=${endpointName}`);
-  }
-
   // Risk Prediction
   async predictRisk(location) {
     return this.post('/predict/risk', {
@@ -257,7 +248,7 @@ class ApiService {
     return this.post('/api/v1/map/geocode', { address });
   }
 
-  // Map Kit Integration
+  // Map configuration (Leaflet + OSM tiles, OSRM routing, Nominatim geocoding)
   async getMapConfig() {
     return this.get('/api/v1/map/config');
   }
@@ -288,41 +279,19 @@ class ApiService {
     return this.post('/api/v1/map/analyze-route-safety', { waypoints });
   }
 
-  // Demo and Testing
-  async runFullWorkflow() {
-    return this.get('/demo/full-workflow');
-  }
-
-  // DEPRECATED: Mock data functions removed for production
-  // These functions previously returned fake data for offline mode.
-  // The frontend now uses proper error states when backend is unavailable.
-
-  getMockDashboardData() {
-    console.warn('DEPRECATED: getMockDashboardData() should not be called in production');
-    throw new Error('Mock data is disabled in production mode');
-  }
-
-  getMockNavigationData() {
-    console.warn('DEPRECATED: getMockNavigationData() should not be called in production');
-    throw new Error('Mock data is disabled in production mode');
-  }
-
-  getMockHazardData() {
-    console.warn('DEPRECATED: getMockHazardData() should not be called in production');
-    throw new Error('Mock data is disabled in production mode');
-  }
-
   // Utility methods
   async checkBackendHealth() {
     try {
       const status = await this.getStatus();
       return {
         isOnline: true,
-        mode: status.mock_mode ? 'Mock' : 'Production',
+        mode: status.map_services_available ? 'Live' : 'Mock',
         services: {
-          obs: status.obs_storage?.status === 'RUNNING',
-          modelarts: status.modelarts_training?.status === 'RUNNING',
-          inference: status.inference_service?.status === 'RUNNING',
+          routing: status.services?.routing?.includes('✅') ?? false,
+          geocoding: status.services?.geocoding?.includes('✅') ?? false,
+          maps: status.services?.maps?.includes('✅') ?? false,
+          database: status.services?.neon_database?.includes('✅') ?? false,
+          edge_ai: status.services?.edge_ai?.includes('✅') ?? false,
         },
       };
     } catch (error) {
@@ -330,9 +299,11 @@ class ApiService {
         isOnline: false,
         mode: 'Offline',
         services: {
-          obs: false,
-          modelarts: false,
-          inference: false,
+          routing: false,
+          geocoding: false,
+          maps: false,
+          database: false,
+          edge_ai: false,
         },
       };
     }
@@ -355,10 +326,10 @@ class ApiService {
           });
         },
         (error) => {
-          // Fallback to Johannesburg coordinates for demo
+          // GPS denied/unavailable — fall back to the Stellenbosch field-test area.
           resolve({
-            latitude: -26.2041,
-            longitude: 28.0473,
+            latitude: -33.9321,
+            longitude: 18.8602,
             accuracy: 100,
             isDemo: true,
           });

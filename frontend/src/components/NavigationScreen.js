@@ -380,7 +380,7 @@ const NavigationScreen = () => {
 
               <div className="powered-by-mini">
                 <span>Powered by</span>
-                <div className="huawei-mini">🛡️ <strong>SAFEROUTE MAP</strong></div>
+                <div className="powered-by-mini-brand">🛡️ <strong>SAFEROUTE MAP</strong></div>
               </div>
             </div>
           </motion.div>
