@@ -259,9 +259,13 @@ const LeafletMapComponent = ({
         zoomControl={true}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          maxZoom={18}
+          url={
+            process.env.REACT_APP_CARTO_API_KEY
+              ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${process.env.REACT_APP_CARTO_API_KEY}`
+              : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          }
+          attribution='&copy; <a href="https://carto.com/" target="_blank">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          maxZoom={19}
           minZoom={8}
         />
         

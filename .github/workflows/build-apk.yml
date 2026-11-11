@@ -39,9 +39,12 @@ jobs:
           CI: false
         run: |
           if [ -n "${{ github.event.inputs.backend_url }}" ]; then
-            echo "REACT_APP_API_URL=${{ github.event.inputs.backend_url }}" > .env.production
+            echo "REACT_APP_API_URL=${{ github.event.inputs.backend_url }}" >> .env.production
           elif [ -n "${{ secrets.REACT_APP_API_URL }}" ]; then
-            echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" > .env.production
+            echo "REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}" >> .env.production
+          fi
+          if [ -n "${{ secrets.REACT_APP_CARTO_API_KEY }}" ]; then
+            echo "REACT_APP_CARTO_API_KEY=${{ secrets.REACT_APP_CARTO_API_KEY }}" >> .env.production
           fi
           npm run build
           npx cap sync android
